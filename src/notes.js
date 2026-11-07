@@ -6,13 +6,13 @@
 // con qué números funciona. Una fila por línea; las familias, con el cuadrito de su color
 // (el mismo con el que se pintan en el esquema).
 
-import { RADIUS, HOLE, FAMILIES } from './vortex.js';
+import { RADIUS, HOLE, FAMILIES, SPIRAL } from './vortex.js';
 
 // Rellena el cajetín «el» con los números del remolino («info», de createVortex).
 export function fillNotes(el, info) {
   const rows = [
     'VORTIK · ESQUEMA',
-    'ESPIRAL LOG. + EMBUDO',
+    SPIRAL === 'log' ? 'ESPIRAL LOG. + EMBUDO' : 'EVOLVENTE + EMBUDO',
     `${info.fibers} FIBRAS · ${(info.points / 1000).toFixed(1)}K PTS`,
     // ω (omega): la velocidad de giro, en radianes por segundo. En minúscula aunque el
     // cajetín vaya en mayúsculas: en mayúscula (Ω) serían ohmios.

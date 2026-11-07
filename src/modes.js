@@ -12,7 +12,9 @@
 //                 'normal': la de encima tapa a la de debajo;
 //   lineShare     qué parte de las líneas finas se pinta (1 = todas);
 //   wireframe     las cintas y las gotas, en alambre: se ven sus triángulos;
-//   guides        las guías del esquema (guides.js).
+//   guides        las guías del esquema (guides.js);
+//   soften        un desenfoque de medio píxel sobre todo, en píxeles: en WebGL los bordes
+//                 salen perfectos y el blanco corta; la foto tiene la suavidad de la lente.
 //
 // Como en vertikis: «Prev» y «Next» en el pie, o las flechas del teclado, pasan de uno a
 // otro, y la dirección lleva el modo (#portada, #esquema) para poder compartirlo.
@@ -21,13 +23,14 @@ export const MODES = {
   // Noche: blanco sobre negro, con las líneas sumándose. El primero que hicimos.
   noche: {
     background: '#000000',
-    paint: '#ffffff',
+    paint: '#ecebe6',
     palette: 'tone',
-    lineOpacity: 0.4,
+    lineOpacity: 0.35,
     lineBlending: 'add',
-    lineShare: 1,
+    lineShare: 0.8,
     wireframe: false,
     guides: false,
+    soften: 0.35,
   },
 
   // Portada: como el vinilo. Fondo de cartón gris carbón, pintura blanco roto, menos
@@ -35,13 +38,14 @@ export const MODES = {
   // del cartón los pone style.css, encima del canvas.
   portada: {
     background: '#2a2926',
-    paint: '#e6e2d6',
+    paint: '#dcd8cc',
     palette: 'tone',
-    lineOpacity: 0.55,
+    lineOpacity: 0.45,
     lineBlending: 'normal',
-    lineShare: 0.5,
+    lineShare: 0.4,
     wireframe: false,
     guides: false,
+    soften: 0.45,
   },
 
   // Esquema: para ver qué está pasando. Cada familia de su color, las cintas en alambre,
@@ -55,6 +59,7 @@ export const MODES = {
     lineShare: 0.35,
     wireframe: true,
     guides: true,
+    soften: 0,
   },
 };
 

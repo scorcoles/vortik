@@ -29,6 +29,8 @@ fillNotes(document.querySelector('[data-notes]'), vortex.info);
 setupModes((name, style) => {
   stage.renderer.setClearColor(style.background);
   vortex.setStyle(style);
+  // La suavidad de lente: un desenfoque muy leve de todo el canvas (lo hace el navegador).
+  canvas.style.filter = style.soften ? `blur(${style.soften}px)` : '';
   document.documentElement.className = `is-${name}`;
   // La fotocopia se pinta la primera vez que hace falta.
   if (name === 'portada') applyToner(document.querySelector('.toner'));

@@ -19,19 +19,38 @@ const TAU = Math.PI * 2;
 // Radio exterior del remolino. Es nuestra unidad: todo lo demás se mide respecto a él.
 export const RADIUS = 1;
 
-// Radio del agujero negro del centro.
+// Radio del agujero negro del centro (en la portada, el rodillo).
 export const HOLE = 0.25;
 
 // Lo que se hunde el embudo desde el borde hasta el agujero.
 const DEPTH = 0.6;
 
-// Cuánto se enrosca la espiral. 0 = fibras rectas hacia el centro; más = más vueltas.
+// La forma de la espiral. La foto de la portada se hizo con un rodillo de pintura girando
+// en un taladro: el agujero es el rodillo. Cada gota sale disparada en línea recta,
+// tangente al rodillo, desde el punto del borde donde estaba al soltarse; y el rodillo
+// sigue girando. En la foto, cada gota salió de un sitio distinto y lleva un tiempo
+// distinto volando, y todas juntas dibujan una EVOLVENTE del círculo: la curva que deja
+// un hilo al desenrollarse de un carrete del tamaño del agujero.
+// Con «?espiral=log» en la dirección, la espiral logarítmica del principio, para comparar.
+export const SPIRAL = new URLSearchParams(location.search).get('espiral') === 'log' ? 'log' : 'involute';
+
+// Cuánto se enrosca la espiral logarítmica. 0 = fibras rectas hacia el centro; más = más
+// vueltas.
 const TWIST = 1.6;
 
-// Espiral logarítmica: cada vez que el radio se reduce a la mitad, la fibra gira el mismo
-// ángulo. Es la espiral de las galaxias, de los caracoles y de un desagüe.
+// Para un punto a distancia r del centro, en qué ángulo pasa por ahí la espiral.
 export function spiralAngle(r) {
-  return TWIST * Math.log(RADIUS / r);
+  if (SPIRAL === 'log') {
+    // Espiral logarítmica: cada vez que el radio se reduce a la mitad, la fibra gira el
+    // mismo ángulo. Es la espiral de las galaxias, de los caracoles y de un desagüe.
+    return TWIST * Math.log(RADIUS / r);
+  }
+  // Evolvente: «u» es cuánto hilo se ha desenrollado (medido en radios del carrete). El
+  // punto está a r = HOLE · √(1 + u²) del centro, así que u = √((r / HOLE)² − 1), y ha
+  // girado u − atan(u). Va en negativo para que se enrosque hacia el mismo lado que la
+  // logarítmica.
+  const u = Math.sqrt(Math.max((r / HOLE) ** 2 - 1, 0));
+  return -(u - Math.atan(u));
 }
 
 // El embudo: plano en el borde y cada vez más empinado cerca del agujero, como el agua
@@ -271,8 +290,9 @@ function createTangle(angle) {
     drop,
     // Las salpicaduras, en la punta que sale disparada; las demás, en cualquiera.
     dropAt: splash || chance(0.5) ? 1 : 0,
-    // Las salpicaduras salen casi rectas: sus quiebros, mucho más pequeños (paso 4).
-    bendScale: splash ? 0.15 : 1,
+    // Las salpicaduras salen casi rectas: sus quiebros, mucho más pequeños; las cintas, la
+    // mitad, porque con un quiebro brusco se doblan en «Z» (paso 4).
+    bendScale: splash ? 0.15 : width ? 0.5 : 1,
   };
 }
 
@@ -284,10 +304,10 @@ function createTangle(angle) {
 // familia tiene su propio mapa: los huecos de las cerdas no coinciden con los del
 // anillo. Los del borde, casi parejos: tienen que cerrar el círculo.
 export const FAMILIES = [
-  { name: 'borde', color: '#ffd166', count: 1800, points: 4, bends: [0, 0, 0], create: createMicro, density: createDensity(0.6) },
-  { name: 'cerdas', color: '#ef476f', count: 700, points: 24, bends: [3, 0.006, 0.1], create: createHair, density: createDensity(3) },
-  { name: 'corrientes', color: '#06d6a0', count: 1100, points: 64, bends: [5, 0.02, 0.12], create: createStream, density: createDensity(2) },
-  { name: 'anillo', color: '#4cc9f0', count: 350, points: 64, bends: [7, 0.05, 0.18], create: createTangle, density: createDensity(1.5) },
+  { name: 'borde', color: '#ffd166', count: 1400, points: 4, bends: [0, 0, 0], create: createMicro, density: createDensity(0.6) },
+  { name: 'cerdas', color: '#ef476f', count: 500, points: 24, bends: [3, 0.006, 0.1], create: createHair, density: createDensity(3) },
+  { name: 'corrientes', color: '#06d6a0', count: 750, points: 64, bends: [5, 0.02, 0.12], create: createStream, density: createDensity(2) },
+  { name: 'anillo', color: '#4cc9f0', count: 280, points: 64, bends: [7, 0.05, 0.18], create: createTangle, density: createDensity(1.5) },
 ];
 
 // Crea todas las fibras y apunta en cada una de qué familia es, cuántos puntos tiene y
