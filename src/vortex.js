@@ -165,8 +165,8 @@ function fiberPoint(fiber, t, out, i) {
 // grumos y huecos, distinta cada vez que se carga la página.
 // «contrast» exagera la diferencia: con 1, suave; con 3, zonas llenas y zonas vacías.
 // El suelo de los mapas: ninguna zona baja de esta parte de lo que tienen las más llenas.
-// Así el reparto es irregular pero sin calvas. Las zonas CASI vacías no salen de aquí,
-// sino de los claros (createClearings, más abajo): unas pocas, y bien marcadas.
+// Así el reparto es irregular pero sin calvas. La zona CASI vacía y la MUY poblada no
+// salen de aquí, sino de la composición (createComposition, más abajo).
 const GAP_FLOOR = { desktop: 0.2, phone: 0.2 };
 
 function createDensity(contrast) {
@@ -330,9 +330,9 @@ function createTangle(angle) {
 // anillo. Los del borde, casi parejos: tienen que cerrar el círculo.
 export const FAMILIES = [
   { name: 'borde', color: '#ffd166', count: 1400, points: 4, bends: [0, 0, 0], create: createMicro, contrast: 0.6 },
-  { name: 'cerdas', color: '#ef476f', count: 425, points: 24, bends: [3, 0.006, 0.1], create: createHair, contrast: 4 },
-  { name: 'corrientes', color: '#06d6a0', count: 638, points: 64, bends: [5, 0.02, 0.12], create: createStream, contrast: 3 },
-  { name: 'anillo', color: '#4cc9f0', count: 280, points: 64, bends: [7, 0.05, 0.18], create: createTangle, contrast: 2 },
+  { name: 'cerdas', color: '#ef476f', count: 425, points: 24, bends: [3, 0.006, 0.1], create: createHair, contrast: 1.5 },
+  { name: 'corrientes', color: '#06d6a0', count: 638, points: 64, bends: [5, 0.02, 0.12], create: createStream, contrast: 1.2 },
+  { name: 'anillo', color: '#4cc9f0', count: 280, points: 64, bends: [7, 0.05, 0.18], create: createTangle, contrast: 1 },
 ];
 
 // Una rama de una cinta: una copia de su madre que solo recorre su recorrido desde «at»
@@ -355,43 +355,43 @@ function createBranch(parent) {
   };
 }
 
-// Los claros: dos o tres zonas por vórtice que se quedan CASI vacías, con alguna fibra
-// suelta. Cada claro es un trozo del círculo (alrededor de un ángulo, de 20° a 45° hacia
-// cada lado) y afecta solo a algunas familias: a las de dentro (cerdas y corrientes), al
-// anillo, o a las tres. Así, a veces, se abre un claro dentro con el anillo pasando por
-// encima, y otras, un hueco en el anillo. Al borde del agujero, nunca: el círculo tiene
-// que seguir cerrado. Como cada fibra se coloca por el ángulo donde empieza y luego gira
-// en espiral, el claro también sale en espiral.
-const CLEARINGS = [2, 3];
-const CLEARING_LEFT = 0.05; // lo que queda en el centro de un claro: el 5 %
-const CLEARING_GROUPS = [['cerdas', 'corrientes'], ['anillo'], ['cerdas', 'corrientes', 'anillo']];
+// La composición de cada vórtice: una zona CASI vacía, otra MUY poblada (más o menos
+// enfrente, para que un lado pese y el otro respire) y el resto, difuso (los mapas de
+// cada familia, con poco contraste). Cada zona es un trozo del círculo, alrededor de un
+// ángulo, y afecta a cerdas, corrientes y anillo; al borde del agujero, nunca: el círculo
+// tiene que seguir cerrado. Como cada fibra se coloca por el ángulo donde empieza y luego
+// gira en espiral, las zonas también salen en espiral.
+const EMPTY_LEFT = 0.05; // lo que queda en el centro de la zona vacía: el 5 %
+const FULL_BOOST = 3; // la zona poblada, tres veces más densa que el resto
+const ZONE_FAMILIES = ['cerdas', 'corrientes', 'anillo'];
 
-function createClearings() {
-  const count = Math.round(random(...CLEARINGS));
-  return Array.from({ length: count }, () => ({
-    angle: random(0, TAU),
-    width: THREE.MathUtils.degToRad(random(20, 45)),
-    families: CLEARING_GROUPS[Math.floor(Math.random() * CLEARING_GROUPS.length)],
-  }));
+function createComposition() {
+  const empty = random(0, TAU);
+  return {
+    empty: { angle: empty, width: THREE.MathUtils.degToRad(random(25, 45)) },
+    full: { angle: empty + Math.PI + random(-0.7, 0.7), width: THREE.MathUtils.degToRad(random(30, 55)) },
+  };
 }
 
-// El mapa de densidad «density» de una familia, con sus claros: en cada uno, la densidad
-// baja hasta CLEARING_LEFT en el centro, con el borde suave (la mitad de dentro, al
-// mínimo; la de fuera, una «S» hasta el mapa normal), para que no parezca un corte.
-function withClearings(density, clearings, name) {
-  const mine = clearings.filter((c) => c.families.includes(name));
-  if (mine.length === 0) return density;
+// Cuánto se está dentro de una zona: 1 en su mitad de dentro, 0 fuera, y una «S» suave
+// entre medias, para que el borde no parezca un corte.
+function inside(angle, zone) {
+  // La distancia en ángulo al centro de la zona, dando la vuelta por el lado corto.
+  const d = Math.abs(((angle - zone.angle + Math.PI * 3) % TAU) - Math.PI);
+  if (d >= zone.width) return 0;
+  const edge = Math.min(1, Math.max(0, (d - zone.width * 0.5) / (zone.width * 0.5)));
+  return 1 - edge * edge * (3 - 2 * edge);
+}
+
+// El mapa de densidad «density» de una familia, con la composición encima: en la zona
+// vacía baja hasta EMPTY_LEFT; en la poblada sube hasta FULL_BOOST veces. Todo dividido
+// entre FULL_BOOST, para que el mapa siga yendo de 0 a 1 (pickAngle lo necesita así).
+function withComposition(density, composition, name) {
+  if (!ZONE_FAMILIES.includes(name)) return density;
   return (angle) => {
-    let k = 1;
-    for (const c of mine) {
-      // La distancia en ángulo al centro del claro, dando la vuelta por el lado corto.
-      const d = Math.abs(((angle - c.angle + Math.PI * 3) % TAU) - Math.PI);
-      if (d >= c.width) continue;
-      const edge = Math.min(1, Math.max(0, (d - c.width * 0.5) / (c.width * 0.5)));
-      const open = edge * edge * (3 - 2 * edge);
-      k *= CLEARING_LEFT + (1 - CLEARING_LEFT) * open;
-    }
-    return density(angle) * k;
+    const empty = 1 - (1 - EMPTY_LEFT) * inside(angle, composition.empty);
+    const full = 1 + (FULL_BOOST - 1) * inside(angle, composition.full);
+    return (density(angle) * empty * full) / FULL_BOOST;
   };
 }
 
@@ -410,11 +410,11 @@ function createFibers() {
   const fibers = [];
   let first = 0;
   const share = isPhone() ? PHONE_SHARE : DESKTOP_SHARE;
-  const clearings = createClearings();
+  const composition = createComposition();
   FAMILIES.forEach((family, index) => {
     // Su mapa de densidad, sorteado de nuevo en cada vórtice: así cada uno tiene sus
-    // propias zonas llenas y vacías. Y, encima, los claros que le tocan.
-    family.density = withClearings(createDensity(family.contrast), clearings, family.name);
+    // propias variaciones. Y, encima, la composición del vórtice.
+    family.density = withComposition(createDensity(family.contrast), composition, family.name);
     // Cuántas tiene en este vórtice (las que dice el cajetín del modo wire, notes.js).
     family.made = Math.round(family.count * share);
     for (let n = 0; n < family.made; n++) {
