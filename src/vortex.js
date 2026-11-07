@@ -672,16 +672,31 @@ export function createVortex() {
   const paint = new THREE.Color();
   const color = new THREE.Color();
 
+  // El color holográfico de una fibra: el tono, según su ángulo (HOLO_TURNS vueltas de
+  // arcoíris por vuelta), con un pelo de azar para que las bandas no sean perfectas; la
+  // saturación, baja (metal, no neón); la luz, según lo blanca que sea la fibra.
+  const HOLO_TURNS = 2;
+  const HOLO_SATURATION = 0.5;
+  const HOLO_LIGHT = [0.3, 0.72];
+  function holo(fiber) {
+    const hue = (fiber.angle / TAU) * HOLO_TURNS + 0.03 * Math.sin(fiber.first * 12.9898);
+    const light = HOLO_LIGHT[0] + (HOLO_LIGHT[1] - HOLO_LIGHT[0]) * fiber.brightness;
+    return color.setHSL(((hue % 1) + 1) % 1, HOLO_SATURATION, light);
+  }
+
   function setStyle(modeStyle) {
     // En el móvil, con los ajustes propios del modo para el móvil (si los tiene).
     const style = isPhone() && modeStyle.phone ? { ...modeStyle, ...modeStyle.phone } : modeStyle;
     // El color de cada fibra: en «tone», el color de la pintura del modo, más claro o más
-    // oscuro según lo blanca que sea la fibra; en «family», el color de su familia.
+    // oscuro según lo blanca que sea la fibra; en «family», el color de su familia; en
+    // «holo», un color del arcoíris según su ángulo.
     paint.set(style.paint);
     const colorOf =
       style.palette === 'family'
         ? (fiber) => color.set(FAMILIES[fiber.family].color)
-        : (fiber) => color.copy(paint).multiplyScalar(fiber.brightness);
+        : style.palette === 'holo'
+          ? holo
+          : (fiber) => color.copy(paint).multiplyScalar(fiber.brightness);
 
     for (const fiber of fibers) {
       colorOf(fiber);

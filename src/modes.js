@@ -6,7 +6,9 @@
 //   background    el color del fondo;
 //   paint         el color de la pintura;
 //   palette       'tone': cada fibra, del color de la pintura, más clara u oscura según
-//                 su brillo; 'family': cada fibra, del color de su familia;
+//                 su brillo; 'family': cada fibra, del color de su familia; 'holo': cada
+//                 fibra, de un color del arcoíris según su ángulo (como una lámina
+//                 holográfica);
 //   lineOpacity   lo opacas que son las líneas finas;
 //   lineBlending  'add': se suman al cruzarse (brillan, y si son muchas se queman);
 //                 'normal': la de encima tapa a la de debajo;
@@ -18,7 +20,8 @@
 //   phone         (si lo tiene) los ajustes que cambian en el móvil.
 //
 // Como en vertikis: «Prev» y «Next» en el pie, o las flechas del teclado, pasan de uno a
-// otro, y la dirección lleva el modo (#cover, #wire) para poder compartirlo.
+// otro, y la dirección lleva el modo (#cover, #holo, #wire) para poder compartirlo. Wire,
+// siempre el último: es el de ver por dentro, no uno más.
 
 export const MODES = {
   // Noche: blanco sobre negro, con las líneas sumándose. El primero que hicimos. El negro,
@@ -51,6 +54,21 @@ export const MODES = {
     wireframe: false,
     guides: false,
     soften: 0.45,
+  },
+
+  // Holo: como una lámina holográfica sobre negro mate. Cada fibra, de un color del
+  // arcoíris según dónde está alrededor del agujero (dos vueltas de arcoíris por vuelta
+  // de remolino), apagado y metálico, no de neón. Sin sumarse: la lámina no brilla, refleja.
+  holo: {
+    background: '#0a0a0b',
+    paint: '#f2efe8',
+    palette: 'holo',
+    lineOpacity: 0.55,
+    lineBlending: 'normal',
+    lineShare: 0.6,
+    wireframe: false,
+    guides: false,
+    soften: 0.35,
   },
 
   // Wire: para ver qué está pasando. Cada familia de su color, las cintas en alambre,

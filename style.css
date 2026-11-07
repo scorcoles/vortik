@@ -384,6 +384,23 @@ canvas.is-tilting {
   display: block;
 }
 
+/* modo holo: negro mate; el pie, en blanco roto (lo irisado es el remolino). */
+.is-holo body {
+  background: #0a0a0b;
+}
+
+.is-holo .credit,
+.is-holo .sound,
+.is-holo .share,
+.is-holo .fps {
+  color: #f2efe8;
+}
+
+.is-holo .credit__tag {
+  background: #f2efe8;
+  color: #0a0a0b;
+}
+
 /* modo wire: fondo azul noche y el pie en gris claro. */
 .is-wire body {
   background: #0e1116;
