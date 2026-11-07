@@ -18,7 +18,7 @@ export function fillNotes(el, info) {
     // ω (omega): la velocidad de giro, en radianes por segundo. En minúscula aunque el
     // cajetín vaya en mayúsculas: en mayúscula (Ω) serían ohmios.
     `R ${RADIUS} · AGUJERO ${HOLE} · <span class="notes__keep">ω</span> ${info.spin}`,
-    ...FAMILIES.map((f) => `<i style="--c: ${f.color}"></i>${f.name} · ${f.count} × ${f.points} PTS`),
+    ...FAMILIES.map((f) => `<i style="--c: ${f.color}"></i>${f.name} · ${f.made} × ${f.points} PTS`),
     'VERTIK.NET',
   ];
   el.innerHTML = rows.map((row) => `<div>${row}</div>`).join('');

@@ -315,14 +315,22 @@ export const FAMILIES = [
 // Crea todas las fibras y apunta en cada una de qué familia es, cuántos puntos tiene y
 // dónde empieza («first») en la lista de puntos de todas. Y un número al azar, «rank»,
 // para que los modos que pintan menos líneas (paso 7) sepan cuáles quitar.
+// En el móvil (pantalla táctil o estrecha), un 20 % menos de fibras: se ve menos denso en
+// una pantalla pequeña, y son unos 17.000 puntos menos que mover en cada fotograma.
+const PHONE_SHARE = 0.8;
+const isPhone = () => window.matchMedia('(max-width: 47.99rem), (pointer: coarse)').matches;
+
 function createFibers() {
   const fibers = [];
   let first = 0;
+  const share = isPhone() ? PHONE_SHARE : 1;
   FAMILIES.forEach((family, index) => {
     // Su mapa de densidad, sorteado de nuevo en cada vórtice: así cada uno tiene sus
     // propias zonas llenas y vacías.
     family.density = createDensity(family.contrast);
-    for (let n = 0; n < family.count; n++) {
+    // Cuántas tiene en este vórtice (las que dice el cajetín del esquema, notes.js).
+    family.made = Math.round(family.count * share);
+    for (let n = 0; n < family.made; n++) {
       const fiber = family.create(pickAngle(family.density));
       fiber.family = index;
       fiber.points = family.points;
