@@ -43,7 +43,7 @@ const countFps = createFps();
 // Cada vez que cambia el modo: el fondo, el remolino y una clase en <html> (is-cover,
 // is-wire…) para que style.css cambie el pie y ponga, o no, el desgaste del cartón.
 let mode = null;
-setupModes((name, style) => {
+const setMode = setupModes((name, style) => {
   mode = { name, style };
   stage.setBackground(style.background);
   vortex.setStyle(style);
@@ -70,6 +70,8 @@ window.vortik = {
   showFps(on = true) {
     if (fpsDisplay) fpsDisplay.hidden = !on;
   },
+  // El modo escondido (modes.js): no sale con Prev y Next.
+  holo: () => setMode('holo'),
 };
 
 // Doble clic o doble toque: un vórtice nuevo. Se tira el viejo y se crea otro (con sus

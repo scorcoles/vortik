@@ -17,11 +17,13 @@
 //   guides        las guías del modo wire (guides.js);
 //   soften        un desenfoque de medio píxel sobre todo, en píxeles: en WebGL los bordes
 //                 salen perfectos y el blanco corta; la foto tiene la suavidad de la lente;
-//   phone         (si lo tiene) los ajustes que cambian en el móvil.
+//   phone         (si lo tiene) los ajustes que cambian en el móvil;
+//   hidden        (si lo tiene) fuera de Prev y Next: solo con su # en la dirección o
+//                 desde la consola (vortik.holo()).
 //
 // Como en vertikis: «Prev» y «Next» en el pie, o las flechas del teclado, pasan de uno a
-// otro, y la dirección lleva el modo (#cover, #holo, #wire) para poder compartirlo. Wire,
-// siempre el último: es el de ver por dentro, no uno más.
+// otro, y la dirección lleva el modo (#cover, #wire) para poder compartirlo. Wire, siempre
+// el último: es el de ver por dentro, no uno más. Holo está escondido: solo con #holo.
 
 export const MODES = {
   // Noche: blanco sobre negro, con las líneas sumándose. El primero que hicimos. El negro,
@@ -69,6 +71,7 @@ export const MODES = {
     wireframe: false,
     guides: false,
     soften: 0.35,
+    hidden: true,
   },
 
   // Wire: para ver qué está pasando. Cada familia de su color, las cintas en alambre,
@@ -86,11 +89,13 @@ export const MODES = {
   },
 };
 
-// El orden en que pasan Prev y Next. El primero es el de siempre (sin # en la dirección).
-const ORDER = Object.keys(MODES);
+// Todos los modos, y los que pasan Prev y Next (sin los escondidos). El primero es el de
+// siempre (sin # en la dirección).
+const ALL = Object.keys(MODES);
+const ORDER = ALL.filter((name) => !MODES[name].hidden);
 
 // Prepara los modos. «apply(name, style)» se llama cada vez que cambia el modo, y la
-// primera vez, con el de la dirección.
+// primera vez, con el de la dirección. Devuelve «setMode(name)», para ponerlos a mano.
 export function setupModes(apply) {
   let current = ORDER[0];
 
@@ -102,10 +107,15 @@ export function setupModes(apply) {
     if (location.hash !== hash) history.replaceState(null, '', location.pathname + location.search + hash);
   }
 
-  // El anterior (by = -1) o el siguiente (by = 1), dando la vuelta al llegar al final.
+  // El anterior (by = -1) o el siguiente (by = 1), dando la vuelta al llegar al final y
+  // saltando los escondidos (desde uno escondido, el de al lado en la lista: de holo, Next
+  // lleva a wire y Prev a cover).
   function stepMode(by) {
-    const n = ORDER.length;
-    setMode(ORDER[(ORDER.indexOf(current) + by + n) % n]);
+    const n = ALL.length;
+    let k = ALL.indexOf(current);
+    do k = (k + by + n) % n;
+    while (MODES[ALL[k]].hidden);
+    setMode(ALL[k]);
   }
 
   for (const [selector, by] of [['[data-mode-prev]', -1], ['[data-mode-next]', 1]]) {
@@ -129,4 +139,6 @@ export function setupModes(apply) {
   };
   window.addEventListener('hashchange', fromHash);
   fromHash();
+
+  return setMode;
 }

@@ -10,7 +10,7 @@ Un remolino de fibras de pintura que gira alrededor de un agujero negro, se mece
 - **Arrastra** (en el móvil, con **dos dedos**): inclina el plano. Al soltar, vuelve a plano.
 - **Pellizca** (dos dedos, el trackpad o la rueda del ratón): aprieta el remolino hacia el agujero, y gira más deprisa, como una patinadora que recoge los brazos. Al soltar, vuelve a su tamaño.
 - **Doble clic** (o doble toque): un vórtice nuevo, distinto cada vez.
-- **← Prev · Next →** en el pie, o las flechas del teclado: cuatro maneras de verlo, **noche** (blanco sobre negro), **cover** (como el vinilo, con su cartón gastado), **holo** (irisado, como una lámina holográfica sobre negro) y **wire** (cada familia de fibras de un color, las guías y los números).
+- **← Prev · Next →** en el pie, o las flechas del teclado: tres maneras de verlo, **noche** (blanco sobre negro), **cover** (como el vinilo, con su cartón gastado) y **wire** (cada familia de fibras de un color, las guías y los números). Y uno escondido, **holo** (irisado, como una lámina holográfica sobre negro): solo con `#holo` en la dirección o `vortik.holo()` en la consola.
 - **Compartir** (arriba a la derecha): una foto del momento.
 
 Un experimento de [VERTIK](https://www.vertik.net). Homenaje a la portada de [*Dysnomia*](https://www.youtube.com/watch?v=BiVRDuIUKfA&list=OLAK5uy_l8Qxdj6Uvs5vhsUzVTHRmUoHcGrPncBwA), de Dawn of Midi (2013): una foto de pintura blanca lanzada por un rodillo que giraba en un taladro. Aquí no se usa la foto: todo se genera con código.
