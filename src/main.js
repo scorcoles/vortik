@@ -19,7 +19,7 @@ import { createStage } from './stage.js';
 import { createVortex, RADIUS } from './vortex.js';
 import { setupModes } from './modes.js';
 import { applyToner } from './toner.js';
-import { fillNotes } from './notes.js';
+import { fillNotes, setupNotesToggle } from './notes.js';
 import { createPointer } from './pointer.js';
 import { createTilt } from './tilt.js';
 import { setupShare } from './share.js';
@@ -30,6 +30,7 @@ const stage = createStage(canvas, { radius: RADIUS });
 let vortex = createVortex();
 stage.scene.add(vortex.object);
 fillNotes(document.querySelector('[data-notes]'), vortex.info);
+setupNotesToggle();
 
 // Cada vez que cambia el modo: el fondo, el remolino y una clase en <html> (is-portada,
 // is-esquema…) para que style.css cambie el pie y ponga, o no, el desgaste del cartón.
@@ -40,7 +41,11 @@ setupModes((name, style) => {
   vortex.setStyle(style);
   // La suavidad de lente: un desenfoque muy leve de todo el canvas (lo hace el navegador).
   canvas.style.filter = style.soften ? `blur(${style.soften}px)` : '';
-  document.documentElement.className = `is-${name}`;
+  // (Sin pisar «is-notes-open»: si el cajetín estaba desplegado, lo sigue estando.)
+  const root = document.documentElement;
+  const notesOpen = root.classList.contains('is-notes-open');
+  root.className = `is-${name}`;
+  root.classList.toggle('is-notes-open', notesOpen);
   // La fotocopia se pinta la primera vez que hace falta.
   if (name === 'portada') applyToner(document.querySelector('.toner'));
 });

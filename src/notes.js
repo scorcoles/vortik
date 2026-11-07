@@ -23,3 +23,24 @@ export function fillNotes(el, info) {
   ];
   el.innerHTML = rows.map((row) => `<div>${row}</div>`).join('');
 }
+
+// En el móvil, el cajetín se despliega con «Info», en el pie, justo encima del texto. El
+// pie ocupa más o menos líneas según el ancho de la pantalla: lo medimos (y lo volvemos a
+// medir cuando cambia) y lo dejamos en --credit-height para que style.css lo coloque encima.
+export function setupNotesToggle() {
+  const toggle = document.querySelector('[data-notes-toggle]');
+  const credit = document.querySelector('.credit');
+  if (!toggle || !credit) return;
+
+  const root = document.documentElement;
+  new ResizeObserver(() => {
+    root.style.setProperty('--credit-height', `${Math.round(credit.getBoundingClientRect().height)}px`);
+  }).observe(credit);
+
+  toggle.addEventListener('click', () => {
+    const open = !root.classList.contains('is-notes-open');
+    root.classList.toggle('is-notes-open', open);
+    toggle.setAttribute('aria-expanded', String(open));
+    toggle.textContent = open ? 'Cerrar info' : 'Info';
+  });
+}

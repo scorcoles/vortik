@@ -90,7 +90,8 @@ canvas.is-tilting {
 }
 
 /* El cajetín del modo esquema, como el del modo wire de vertikis: abajo a la derecha,
-   encima del pie, filas separadas por una línea fina. En el móvil, arriba (más abajo). */
+   encima del pie, filas separadas por una línea fina. En el móvil, se despliega con «Info»
+   (más abajo). */
 .notes {
   position: fixed;
   right: 16px;
@@ -111,47 +112,35 @@ canvas.is-tilting {
   display: block;
 }
 
-/* En el móvil: abajo choca con el pie, que ocupa varias líneas. En vertical, el remolino
-   se ajusta al ancho y deja libre la franja de arriba: el cajetín va ahí, debajo del botón
-   de compartir, más pequeño y del ancho justo de lo que dice. */
+/* «Info», en el pie: solo en el móvil y en el modo esquema (más abajo). */
+.credit__info {
+  display: none;
+}
+
+/* En el móvil, el cajetín no se ve de entrada: lo despliega «Info», en el pie, justo encima
+   del texto y a todo el ancho. El pie ocupa más o menos líneas según la pantalla: su alto
+   lo mide notes.js y lo deja en --credit-height. */
 @media (max-width: 39.99rem) {
+  .is-esquema .notes {
+    display: none;
+  }
+
+  .is-esquema.is-notes-open .notes {
+    display: block;
+  }
+
   .notes {
-    top: 52px;
+    left: 8px;
     right: 8px;
-    bottom: auto;
+    bottom: calc(var(--credit-height, 90px) + 14px);
     width: auto;
-    font-size: 8.5px;
-    line-height: 15px;
+    font-size: 9px;
+    line-height: 16px;
   }
 
-  .notes div {
-    padding: 0 7px;
+  .is-esquema .credit__info {
+    display: inline-block;
   }
-
-  .notes i {
-    width: 7px;
-    height: 7px;
-    margin-right: 6px;
-  }
-}
-
-.notes div {
-  padding: 0 10px;
-  white-space: nowrap;
-}
-
-.notes div + div {
-  border-top: 1px solid rgba(201, 209, 217, 0.4);
-}
-
-/* La primera fila, el título, más marcada. */
-.notes div:first-child {
-  color: #c9d1d9;
-}
-
-/* Lo que no se pasa a mayúsculas (la ω del giro). */
-.notes__keep {
-  text-transform: none;
 }
 
 /* El cuadrito del color de cada familia. */
