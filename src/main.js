@@ -15,6 +15,7 @@
 //   tilt.js    → Paso 10 · clic y arrastrar (o dos dedos) para inclinar el plano
 //   share.js   → compartir una foto del momento
 //   sound.js   → el sonido: un grave continuo y algún scratch
+//   heartbeat.js → el latido: cada 20–30 segundos, «pum-pum»
 
 import { createStage } from './stage.js';
 import { createVortex, RADIUS } from './vortex.js';
@@ -26,6 +27,7 @@ import { createTilt } from './tilt.js';
 import { setupShare } from './share.js';
 import { isPhone } from './device.js';
 import { createSound } from './sound.js';
+import { createHeartbeat } from './heartbeat.js';
 
 const canvas = document.querySelector('[data-vortik]');
 const stage = createStage(canvas, { radius: RADIUS });
@@ -95,6 +97,13 @@ soundButton?.addEventListener('click', () => {
   soundButton.setAttribute('aria-label', playing ? 'Apagar el sonido' : 'Encender el sonido');
 });
 
+// El latido: en cada golpe, un empujón a las fibras y su sonido.
+const heartbeat = createHeartbeat();
+heartbeat.onBeat = (strength) => {
+  vortex.kick(strength);
+  sound.heartbeat(strength);
+};
+
 // El ratón o el dedo: para remover (paso 9) y para inclinar (paso 10).
 const pointer = createPointer(canvas, stage.camera);
 const tilt = createTilt(canvas);
@@ -107,5 +116,7 @@ stage.start((dt) => {
   const cursor = pointer.update(dt, vortex.spin);
   if (tilt.isDragging()) cursor.active = false;
   vortex.update(dt, cursor);
+  // El zoom del latido: todo el remolino, un poco más cerca un instante.
+  vortex.object.scale.setScalar(heartbeat.update(dt));
   sound.update(cursor);
 });

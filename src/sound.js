@@ -10,6 +10,8 @@
 //     dos o tres veces muy deprisa. Ese vaivén es lo que hace que suene a disco arrastrado
 //     con la mano. Sale solo cada pocos segundos, y también al remover deprisa con el cursor.
 //     A veces, en lugar de scratch, un chasquido de vinilo;
+//   - el LATIDO (heartbeat.js): con cada golpe, un golpe grave que cae de tono, como un
+//     bombo muy blando;
 //   - los TICS: de vez en cuando, una ráfaga corta de pulsos electrónicos, agudos, secos y a
 //     ritmo regular, como un error digital que se repite; cada ráfaga en un sitio distinto
 //     entre el altavoz izquierdo y el derecho, y a veces acabada en un golpe grave.
@@ -263,8 +265,28 @@ export function createSound() {
     }
   }
 
+  // Un golpe del latido: una onda que cae de 60 a 38 Hz en menos de un quinto de segundo
+  // (por eso suena a golpe y no a nota). «strength»: 1 el primero, menos el segundo. Los
+  // scratches y los tics esperan a que acabe.
+  function heartbeat(strength = 1) {
+    if (!on) return;
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    osc.frequency.setValueAtTime(60, now);
+    osc.frequency.exponentialRampToValueAtTime(38, now + 0.18);
+    const level = ctx.createGain();
+    level.gain.setValueAtTime(0, now);
+    level.gain.linearRampToValueAtTime(0.7 * strength, now + 0.006);
+    level.gain.exponentialRampToValueAtTime(0.0001, now + 0.3);
+    osc.connect(level).connect(master);
+    osc.start(now);
+    osc.stop(now + 0.32);
+    busyUntil = Math.max(busyUntil, now + 0.6);
+  }
+
   return {
     toggle: () => (on ? stop() : start(), on),
     update,
+    heartbeat,
   };
 }

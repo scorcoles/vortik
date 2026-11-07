@@ -716,5 +716,6 @@ export function createVortex() {
     });
   }
 
-  return { object, tilt, spin, update, setStyle, info, dispose };
+  // «kick»: el empujón del latido (heartbeat.js), para los muelles de cada punto.
+  return { object, tilt, spin, update, setStyle, info, dispose, kick: motion.kick };
 }

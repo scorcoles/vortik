@@ -163,5 +163,19 @@ export function createMotion(fibers, centers) {
     }
   }
 
-  return { update };
+  // Un empujón hacia fuera, para todos los puntos a la vez (el latido, heartbeat.js): a
+  // cada uno le damos una velocidad en la dirección del centro hacia él. Luego sus muelles
+  // lo devuelven, y las puntas sueltas ondulan un instante.
+  const KICK = 0.25;
+  function kick(strength = 1) {
+    for (let i = 0; i < count; i++) {
+      const x = rest[i * 3];
+      const y = rest[i * 3 + 1];
+      const r = Math.hypot(x, y) || 1;
+      velocity[i * 2] += (x / r) * KICK * strength;
+      velocity[i * 2 + 1] += (y / r) * KICK * strength;
+    }
+  }
+
+  return { update, kick };
 }
