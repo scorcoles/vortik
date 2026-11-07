@@ -58,7 +58,8 @@ function windAt(x, y, t, out) {
 // «centers» es la lista con la línea central de todas las fibras (x, y, z seguidos): la
 // que se pinta. La copiamos como posiciones de reposo, y a partir de ahora «centers» será
 // reposo + desplazamiento.
-export function createMotion(fibers, centers) {
+// «hole»: el radio del agujero, para apretar el remolino hacia su borde (squeeze.js).
+export function createMotion(fibers, centers, hole) {
   const rest = centers.slice();
   const count = centers.length / 3;
 
@@ -89,7 +90,8 @@ export function createMotion(fibers, centers) {
 
   // Un paso de dt segundos. «alpha» es la aceleración del giro (radianes por segundo, cada
   // segundo), «time», el reloj, para el viento, y «cursor», lo que dice pointer.js.
-  function update(dt, alpha, time, cursor) {
+  // «squeeze»: lo apretado que está el remolino (squeeze.js; 1 = nada, 0,7 = al 70 %).
+  function update(dt, alpha, time, cursor, squeeze = 1) {
     const stirring = cursor.active;
     const cursorSpeed = Math.hypot(cursor.vx, cursor.vy);
 
@@ -98,6 +100,12 @@ export function createMotion(fibers, centers) {
       const i3 = i * 3;
       const x = rest[i3] + offset[i2];
       const y = rest[i3 + 1] + offset[i2 + 1];
+
+      // Apretado (squeeze.js): cada punto se acerca al borde del agujero, no al centro. Su
+      // distancia al borde se multiplica por «squeeze»: el agujero no cambia y las fibras
+      // del borde siguen pegadas a él. «seen» lleva (x, y) a donde se ve.
+      const r = Math.hypot(x, y);
+      const seen = r > hole ? (hole + (r - hole) * squeeze) / r : 1;
 
       // La inercia (fuerza de Euler): si el giro acelera, cada punto se queda atrás, en
       // contra del giro y más cuanto más lejos del centro. «En contra del giro» en (x, y)
@@ -115,8 +123,8 @@ export function createMotion(fibers, centers) {
       // esté inclinado.
       if (stirring) {
         const z = rest[i3 + 2];
-        const dx = x - (cursor.x + cursor.sx * z);
-        const dy = y - (cursor.y + cursor.sy * z);
+        const dx = x * seen - (cursor.x + cursor.sx * z);
+        const dy = y * seen - (cursor.y + cursor.sy * z);
         const distance2 = dx * dx + dy * dy;
         if (distance2 < stirRadius2) {
           // Cuánto le afecta: 1 justo debajo del cursor y 0 en el borde, con una caída
@@ -158,8 +166,13 @@ export function createMotion(fibers, centers) {
         velocity[i2 + 1] *= 0.5;
       }
 
-      centers[i3] = rest[i3] + offset[i2];
-      centers[i3 + 1] = rest[i3 + 1] + offset[i2 + 1];
+      // Donde se pinta: la posición nueva, apretada como arriba.
+      const nx = rest[i3] + offset[i2];
+      const ny = rest[i3 + 1] + offset[i2 + 1];
+      const nr = Math.hypot(nx, ny);
+      const nk = nr > hole ? (hole + (nr - hole) * squeeze) / nr : 1;
+      centers[i3] = nx * nk;
+      centers[i3 + 1] = ny * nk;
     }
   }
 

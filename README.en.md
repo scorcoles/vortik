@@ -8,6 +8,7 @@ A whirl of paint fibres spinning around a black hole, swaying with its own inert
 
 - **Move the mouse or your finger** over it: it stirs the fibres, which settle back on their own.
 - **Drag** (on a phone, with **two fingers**): tilts the plane. Let go and it levels out again.
+- **Pinch** (two fingers, the trackpad or the mouse wheel): squeezes the whirl towards the hole, and it spins faster, like a skater pulling in their arms. Let go and it returns to its size.
 - **Double-click** (or double-tap): a new vortex, different every time.
 - **← Prev · Next →** in the footer, or the arrow keys: three ways to see it, **noche** (white on black), **cover** (like the record sleeve, worn cardboard and all) and **wire** (each fibre family in its own colour, with guides and numbers).
 - **Share** (top right): a photo of the moment.

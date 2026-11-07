@@ -15,6 +15,7 @@
 //   - la INCLINACIÓN (tilt.js) cambia el grave: inclinar arriba o abajo sube o baja su
 //     tono (hasta 4 semitonos), e inclinar a izquierda o derecha lo hace más brillante o
 //     más apagado (el filtro, hasta una octava);
+//   - APRETAR (squeeze.js) lo tensa: sube el tono y lo cierra; abrir lo relaja;
 //   - los TICS: de vez en cuando, una ráfaga corta de pulsos electrónicos, agudos, secos y a
 //     ritmo regular, como un error digital que se repite; cada ráfaga en un sitio distinto
 //     entre el altavoz izquierdo y el derecho, y a veces acabada en un golpe grave.
@@ -32,6 +33,10 @@ const FILTER = 160;
 const TILT_MAX = Math.PI / 6;
 const TILT_PITCH = 400;
 const TILT_FILTER = 1;
+
+// Lo que cambia al apretar: por cada vez que el giro se acelera (1 / tamaño² − 1), el tono
+// sube SQUEEZE_PITCH céntimos; y el filtro se cierra con el tamaño al cuadrado.
+const SQUEEZE_PITCH = 600;
 
 // Volumen general, y lo que tarda en entrar y en irse (segundos).
 const VOLUME = 0.5;
@@ -300,23 +305,26 @@ export function createSound() {
     busyUntil = Math.max(busyUntil, now + 0.6);
   }
 
-  // Cada fotograma, con la inclinación del plano (en radianes, alrededor del eje x y del y):
-  // el tono y el brillo del grave. Con una transición de una décima de segundo
-  // (setTargetAtTime), para que no dé saltos de un fotograma a otro.
-  function setTilt(x, y) {
+  // Cada fotograma, con la inclinación del plano (en radianes, alrededor del eje x y del y)
+  // y lo apretado que está (1 = nada): el tono y el brillo del grave. Con una transición de
+  // una décima de segundo (setTargetAtTime), para que no dé saltos de un fotograma a otro.
+  function setShape(x, y, squeeze = 1) {
     if (!on) return;
     const clamp = (v) => Math.max(-1, Math.min(1, v / TILT_MAX));
     const now = ctx.currentTime;
-    // Arriba o abajo (eje x): el tono, con «detune», en céntimos de semitono.
-    for (const osc of drone) osc.detune.setTargetAtTime(clamp(x) * TILT_PITCH, now, 0.1);
-    // A izquierda o derecha (eje y): el filtro, más abierto o más cerrado, en octavas.
-    lowpass.frequency.setTargetAtTime(FILTER * 2 ** (clamp(y) * TILT_FILTER), now, 0.1);
+    // El tono, con «detune», en céntimos de semitono: arriba o abajo (eje x), y apretar.
+    const tension = 1 / (squeeze * squeeze) - 1;
+    const cents = clamp(x) * TILT_PITCH + tension * SQUEEZE_PITCH;
+    for (const osc of drone) osc.detune.setTargetAtTime(cents, now, 0.1);
+    // El filtro: a izquierda o derecha (eje y), en octavas; y apretado, más cerrado.
+    const filter = FILTER * 2 ** (clamp(y) * TILT_FILTER) * squeeze * squeeze;
+    lowpass.frequency.setTargetAtTime(filter, now, 0.1);
   }
 
   return {
     toggle: () => (on ? stop() : start(), on),
     update,
     heartbeat,
-    setTilt,
+    setShape,
   };
 }

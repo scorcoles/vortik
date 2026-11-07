@@ -16,6 +16,7 @@
 //   share.js   → compartir una foto del momento
 //   sound.js   → el sonido: un grave continuo y algún scratch
 //   heartbeat.js → el latido: cada 20–30 segundos, «pum-pum»
+//   squeeze.js → apretar con dos dedos (o la rueda): la patinadora
 
 import { createStage } from './stage.js';
 import { createVortex, RADIUS } from './vortex.js';
@@ -28,6 +29,7 @@ import { setupShare } from './share.js';
 import { isPhone } from './device.js';
 import { createSound } from './sound.js';
 import { createHeartbeat } from './heartbeat.js';
+import { createSqueeze } from './squeeze.js';
 
 const canvas = document.querySelector('[data-vortik]');
 const stage = createStage(canvas, { radius: RADIUS });
@@ -107,6 +109,7 @@ heartbeat.onBeat = (strength) => {
 // El ratón o el dedo: para remover (paso 9) y para inclinar (paso 10).
 const pointer = createPointer(canvas, stage.camera);
 const tilt = createTilt(canvas);
+const squeeze = createSqueeze(canvas);
 
 // Cada fotograma: la inclinación, dónde está el cursor (mientras se inclina, no remueve),
 // el remolino avanza dt segundos y el escenario lo pinta.
@@ -115,10 +118,11 @@ stage.start((dt) => {
   tilt.update(dt, vortex.tilt);
   const cursor = pointer.update(dt, vortex.spin);
   if (tilt.isDragging()) cursor.active = false;
-  vortex.update(dt, cursor);
+  const squeezed = squeeze.update(dt);
+  vortex.update(dt, cursor, squeezed);
   // El zoom del latido: todo el remolino, un poco más cerca un instante.
   vortex.object.scale.setScalar(heartbeat.update(dt));
   sound.update(cursor);
-  // La inclinación cambia el tono y el brillo del grave.
-  sound.setTilt(vortex.tilt.rotation.x, vortex.tilt.rotation.y);
+  // La inclinación y el apretón cambian el tono y el brillo del grave.
+  sound.setShape(vortex.tilt.rotation.x, vortex.tilt.rotation.y, squeezed);
 });

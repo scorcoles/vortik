@@ -8,6 +8,7 @@ Un remolino de fibras de pintura que gira alrededor de un agujero negro, se mece
 
 - **Mueve el ratón o el dedo** por encima: remueve las fibras, que vuelven solas a su sitio.
 - **Arrastra** (en el móvil, con **dos dedos**): inclina el plano. Al soltar, vuelve a plano.
+- **Pellizca** (dos dedos, el trackpad o la rueda del ratón): aprieta el remolino hacia el agujero, y gira más deprisa, como una patinadora que recoge los brazos. Al soltar, vuelve a su tamaño.
 - **Doble clic** (o doble toque): un vórtice nuevo, distinto cada vez.
 - **← Prev · Next →** en el pie, o las flechas del teclado: tres maneras de verlo, **noche** (blanco sobre negro), **cover** (como el vinilo, con su cartón gastado) y **wire** (cada familia de fibras de un color, las guías y los números).
 - **Compartir** (arriba a la derecha): una foto del momento.

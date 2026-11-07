@@ -616,7 +616,7 @@ export function createVortex() {
   for (const layer of [lines, ribbons.object, drops.object]) layer.frustumCulled = false;
 
   // Los muelles y la inercia de cada punto (paso 8).
-  const motion = createMotion(fibers, centers);
+  const motion = createMotion(fibers, centers, HOLE);
 
   // =======================================================================================
   // Paso 5 · Todo gira
@@ -638,20 +638,24 @@ export function createVortex() {
   let spinSpeed = spinAt(0);
 
   // «cursor»: dónde está el ratón o el dedo y a qué velocidad va (pointer.js, paso 9).
-  function update(dt, cursor) {
+  // «squeeze»: lo apretado que está (squeeze.js; 1 = nada).
+  function update(dt, cursor, squeeze = 1) {
     time += dt;
 
     // El agujero, inclinado un poco con el plano (paso 10).
     hole.rotation.x = tilt.rotation.x * HOLE_TILT;
     hole.rotation.y = tilt.rotation.y * HOLE_TILT;
-    const nextSpeed = spinAt(time);
+    // La patinadora (squeeze.js): apretado, gira más deprisa, con el cuadrado (el momento
+    // angular se conserva). Como eso cambia la velocidad, también da aceleración: las
+    // fibras se quedan atrás al apretar y se pasan al soltar, por su inercia.
+    const nextSpeed = spinAt(time) / (squeeze * squeeze);
     // La aceleración del giro: cuánto ha cambiado la velocidad, por segundo.
     const alpha = (nextSpeed - spinSpeed) / dt;
     spinSpeed = nextSpeed;
     spin.rotation.z += spinSpeed * dt;
 
     // Cada punto, con su muelle; y las tres capas, rehechas sobre los puntos movidos.
-    motion.update(dt, alpha, time, cursor);
+    motion.update(dt, alpha, time, cursor, squeeze);
     centersAttribute.needsUpdate = true;
     ribbons.update();
     drops.update();
