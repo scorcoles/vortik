@@ -14,5 +14,10 @@
   },
   "devDependencies": {
     "vite": "^8.3.6"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/scorcoles/vortik.git"
   }
 }
