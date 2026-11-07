@@ -125,6 +125,11 @@ canvas {
   color: #c9d1d9;
 }
 
+/* Lo que no se pasa a mayúsculas (la ω del giro). */
+.notes__keep {
+  text-transform: none;
+}
+
 /* El cuadrito del color de cada familia. */
 .notes i {
   display: inline-block;
