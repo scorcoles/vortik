@@ -10,6 +10,9 @@
 
 import * as THREE from 'three';
 
+// Una vuelta entera, en radianes.
+const TAU = Math.PI * 2;
+
 // Radio exterior del remolino. Es nuestra unidad: todo lo demás se mide respecto a él.
 export const RADIUS = 1;
 
@@ -36,57 +39,162 @@ function funnelDepth(r) {
 }
 
 // =========================================================================================
-// Paso 3 · Las fibras: muchas líneas que siguen la corriente
+// Paso 3 · Las fibras: líneas que siguen la corriente
 // =========================================================================================
 
-// Cuántas fibras hay y de cuántos puntos está hecha cada una.
-const FIBERS = 1600;
-const POINTS = 40;
+// De cuántos puntos está hecha cada fibra.
+const POINTS = 64;
 
 // Un número al azar entre a y b.
 function random(a, b) {
   return a + Math.random() * (b - a);
 }
 
-// Cada fibra es un trozo de la corriente: empieza a un radio, acaba en otro más cerca del
-// centro y arranca en un ángulo propio. Con eso basta para calcular todos sus puntos.
-function createFiber() {
-  // Más fibras por fuera que por dentro: la raíz cuadrada empuja el azar hacia el 1.
-  const from = HOLE + (RADIUS - HOLE) * (0.35 + 0.65 * Math.sqrt(Math.random()));
-  // La mitad llega hasta el agujero (por eso el borde del agujero es tan denso). El resto
-  // se queda a medio camino.
-  const to = Math.random() < 0.5 ? HOLE : Math.max(HOLE, from - random(0.1, 0.45));
-  return {
-    angle: random(0, Math.PI * 2),
-    from,
-    to,
-    // Unas fibras más blancas que otras.
-    brightness: random(0.35, 1),
-  };
-}
-
-// Escribe en «out», a partir de la posición «i» (x, y, z seguidos), el punto de la fibra
-// que está a la fracción t de su recorrido (0 = principio, 1 = final).
+// Una fibra es un trozo de la corriente. Para dibujarla basta con saber:
+//   angle       en qué ángulo arranca;
+//   from, to    a qué radio empieza y a qué radio acaba;
+//   turn        cuánto gira de más (o de menos) respecto a la espiral, de punta a punta;
+//   wobble      cuánto se ondula (paso 4);
+//   waves       cuántas ondas hace a lo largo (paso 4);
+//   phase       en qué punto de la onda empieza, para que no ondulen todas a la vez;
+//   brightness  lo blanca que es.
+//
+// Esta función escribe en «out», a partir de la posición «i» (x, y, z seguidos), el punto
+// de la fibra que está a la fracción t de su recorrido (0 = principio, 1 = final).
 function fiberPoint(fiber, t, out, i) {
-  const r = fiber.from + (fiber.to - fiber.from) * t;
-  const a = fiber.angle + spiralAngle(r);
+  // La ondulación: dos ondas de distinta frecuencia sumadas. Una sola se ve mecánica, como
+  // un muelle; con dos, la fibra parece que se ha retorcido sola.
+  const s = t * fiber.waves * TAU + fiber.phase;
+  const wave = Math.sin(s) + 0.5 * Math.sin(2.7 * s + 1.3);
+
+  // El radio va de «from» a «to», más la ondulación. Nunca dentro del agujero.
+  const r = Math.max(HOLE, fiber.from + (fiber.to - fiber.from) * t + fiber.wobble * wave);
+  const a = fiber.angle + spiralAngle(r) + fiber.turn * t;
+
   out[i] = r * Math.cos(a);
   out[i + 1] = r * Math.sin(a);
   out[i + 2] = funnelDepth(r);
 }
 
+// =========================================================================================
+// Paso 4 · Orgánico: no hay dos zonas iguales
+// =========================================================================================
+//
+// En la portada las fibras no están repartidas por igual: hay sectores llenos y sectores
+// casi vacíos. Y no todas son iguales: hay tres familias.
+
+// Un mapa de densidad alrededor del círculo: para cada ángulo, un número entre 0 y 1 que
+// dice cuánto se llena esa zona. Lo hacemos sumando unas pocas ondas que dan 1, 2, 3 y 5
+// vueltas, cada una empezando en un sitio al azar: sale una curva suave e irregular, con
+// grumos y huecos, distinta cada vez que se carga la página.
+// «contrast» exagera la diferencia: con 1, suave; con 3, zonas llenas y zonas vacías.
+function createDensity(contrast) {
+  const waves = [1, 2, 3, 5].map((turns) => ({ turns, phase: random(0, TAU), weight: 1 / turns }));
+  const total = waves.reduce((sum, w) => sum + w.weight, 0);
+
+  return (angle) => {
+    let v = 0;
+    for (const w of waves) v += w.weight * Math.sin(w.turns * angle + w.phase);
+    // v / total va de -1 a 1: lo pasamos a 0…1 y lo elevamos para dar contraste.
+    return ((v / total + 1) / 2) ** contrast;
+  };
+}
+
+// Elige un ángulo al azar siguiendo el mapa: probamos ángulos y nos quedamos con uno con
+// la probabilidad que diga el mapa. Donde el mapa vale 1 se acepta casi siempre; donde
+// vale 0,05, una vez de cada veinte. Así las zonas llenas reciben muchas más fibras.
+function pickAngle(density) {
+  for (;;) {
+    const angle = random(0, TAU);
+    if (Math.random() < density(angle)) return angle;
+  }
+}
+
+// Familia 1 · Pelitos: cortos y finos, pegados al borde del agujero. Casi rectos.
+function createHair(angle) {
+  return {
+    angle,
+    from: HOLE,
+    // Casi todos muy cortos y unos pocos más largos (al cuadrado, el azar se va hacia 0).
+    to: HOLE + 0.015 + 0.13 * Math.random() ** 2,
+    turn: 0,
+    wobble: 0.002,
+    waves: 1,
+    phase: random(0, TAU),
+    brightness: random(0.25, 0.7),
+  };
+}
+
+// Familia 2 · Corrientes: largas, bajan en espiral desde fuera hasta el agujero o hasta
+// medio camino. Se ondulan un poco.
+function createStream(angle) {
+  const from = HOLE + (RADIUS - HOLE) * random(0.3, 1);
+  const to = Math.random() < 0.5 ? HOLE : Math.max(HOLE, from - random(0.1, 0.45));
+  return {
+    angle,
+    from,
+    to,
+    turn: random(-0.15, 0.15),
+    wobble: random(0.003, 0.02),
+    waves: random(1, 3),
+    phase: random(0, TAU),
+    brightness: random(0.3, 1),
+  };
+}
+
+// Familia 3 · Maraña: el anillo de fuera. Fibras que dan vueltas casi en círculo, muy
+// onduladas, que se cruzan unas con otras. Algunas salen disparadas hacia fuera, como
+// las salpicaduras de la pintura.
+function createTangle(angle) {
+  const from = random(0.72, 1.02);
+  const splash = Math.random() < 0.1;
+  return {
+    angle,
+    from,
+    to: splash ? from + random(0.08, 0.3) : from - random(0, 0.12),
+    // Las salpicaduras salen casi rectas; las demás recorren un buen trozo del círculo.
+    turn: splash ? random(-0.2, 0.2) : random(0.5, 2.5) * (Math.random() < 0.8 ? -1 : 1),
+    wobble: splash ? 0.005 : random(0.008, 0.03),
+    waves: splash ? 1 : random(1.5, 3.5),
+    phase: random(0, TAU),
+    brightness: random(0.5, 1),
+  };
+}
+
+// Cuántas fibras de cada familia, y cómo de irregular es su reparto. Cada familia tiene
+// su propio mapa: los huecos de los pelitos no coinciden con los de la maraña.
+const FAMILIES = [
+  { count: 1000, create: createHair, density: createDensity(3) },
+  { count: 1100, create: createStream, density: createDensity(2) },
+  { count: 350, create: createTangle, density: createDensity(1.5) },
+];
+
+function createFibers() {
+  const fibers = [];
+  for (const family of FAMILIES) {
+    for (let n = 0; n < family.count; n++) {
+      fibers.push(family.create(pickAngle(family.density)));
+    }
+  }
+  return fibers;
+}
+
+// =========================================================================================
+// El remolino: todas las fibras en un solo objeto de Three.js (paso 3) que gira (paso 5)
+// =========================================================================================
+
 export function createVortex() {
-  const fibers = Array.from({ length: FIBERS }, createFiber);
+  const fibers = createFibers();
 
   // Para la tarjeta gráfica, todas las fibras son un solo objeto: una lista enorme de
   // puntos (x, y, z seguidos) y otra de colores (r, g, b seguidos). Un solo objeto se
-  // pinta de una vez, y eso es mucho más rápido que 1600 objetos sueltos.
-  const positions = new Float32Array(FIBERS * POINTS * 3);
-  const colors = new Float32Array(FIBERS * POINTS * 3);
+  // pinta de una vez, y eso es mucho más rápido que miles de objetos sueltos.
+  const positions = new Float32Array(fibers.length * POINTS * 3);
+  const colors = new Float32Array(fibers.length * POINTS * 3);
 
   // Y una lista de parejas de puntos que se unen con una línea: (0,1), (1,2), (2,3)…
   // dentro de cada fibra, sin unir el último punto de una con el primero de la siguiente.
-  const segments = new Uint32Array(FIBERS * (POINTS - 1) * 2);
+  const segments = new Uint32Array(fibers.length * (POINTS - 1) * 2);
 
   let s = 0;
   fibers.forEach((fiber, f) => {
@@ -113,7 +221,7 @@ export function createVortex() {
   const material = new THREE.LineBasicMaterial({
     vertexColors: true,
     transparent: true,
-    opacity: 0.5,
+    opacity: 0.4,
     blending: THREE.AdditiveBlending,
     depthWrite: false,
   });
@@ -121,7 +229,7 @@ export function createVortex() {
   const object = new THREE.LineSegments(geometry, material);
 
   // =======================================================================================
-  // Paso 4 · Todo gira
+  // Paso 5 · Todo gira
   // =======================================================================================
 
   // Velocidad de giro, en radianes por segundo. En negativo, la espiral parece que se
