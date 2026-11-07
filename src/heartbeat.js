@@ -5,7 +5,8 @@
 // Cada 20–30 segundos, el remolino late como un corazón: dos golpes seguidos (el segundo,
 // más flojo). En cada golpe se acerca de golpe un poco (un zoom repentino) y vuelve, y sus
 // fibras reciben un empujón hacia fuera (motion.js) que las hace ondular un instante. Si
-// el sonido está encendido, cada golpe suena (sound.js).
+// el sonido está encendido, cada golpe suena (sound.js). Unos segundos antes (SOON) se
+// avisa, para que el sonido se apague y el latido llegue después de un silencio.
 //
 // Cada golpe tiene la forma de un latido: sube muy deprisa y baja más despacio. La fórmula
 // (t / τ) · e^(1 − t/τ) hace justo eso: vale 0 al empezar, 1 en t = τ y se apaga después.
@@ -20,6 +21,9 @@ const BEATS = [
   { at: 0.3, zoom: 0.035 },
 ];
 
+// Cuántos segundos antes del latido se avisa de que viene («onSoon»).
+const SOON = 3;
+
 // Lo que tarda cada golpe en llegar a lo más alto (τ, segundos).
 const RISE = 0.07;
 
@@ -33,17 +37,25 @@ export function createHeartbeat() {
   let since = Infinity;
   // Qué golpes de este latido ya se han avisado.
   let fired = 0;
+  // Si ya se ha avisado de que viene el próximo latido.
+  let warned = false;
 
-  // Lo que se avisa en cada golpe: «onBeat(strength)», con su fuerza (1 el primero).
-  const api = { update, onBeat: null };
+  // Lo que se avisa en cada golpe: «onBeat(strength)», con su fuerza (1 el primero). Y
+  // «onSoon(seconds)», SOON segundos antes de cada latido (o lo que falte, si es menos).
+  const api = { update, onBeat: null, onSoon: null };
 
   // Cada fotograma: avanza el reloj y devuelve cuánto hay que acercar el remolino ahora
   // (1 = nada; 1,06 = un 6 % más cerca).
   function update(dt) {
     wait -= dt;
+    if (!warned && wait <= SOON) {
+      warned = true;
+      api.onSoon?.(Math.max(0, wait));
+    }
     if (wait <= 0) {
       since = 0;
       fired = 0;
+      warned = false;
       wait = random(...EVERY);
     }
 

@@ -11,7 +11,8 @@
 //     con la mano. Sale solo cada pocos segundos, y también al remover deprisa con el cursor.
 //     A veces, en lugar de scratch, un chasquido de vinilo;
 //   - el LATIDO (heartbeat.js): con cada golpe, un golpe grave que cae de tono, como un
-//     bombo muy blando;
+//     bombo muy blando. Antes, todo lo demás se apaga en un segundo y quedan dos de
+//     silencio absoluto; después del latido, vuelve poco a poco;
 //   - la INCLINACIÓN (tilt.js) cambia el grave: inclinar arriba o abajo sube o baja su
 //     tono (hasta 4 semitonos), e inclinar a izquierda o derecha lo hace más brillante o
 //     más apagado (el filtro, hasta una octava);
@@ -41,6 +42,12 @@ const SQUEEZE_PITCH = 600;
 // Volumen general, y lo que tarda en entrar y en irse (segundos).
 const VOLUME = 0.5;
 const FADE = 2;
+
+// El latido: su volumen; antes de él, lo que tarda en apagarse todo lo demás (segundos)
+// (el resto, hasta el golpe, es silencio); y lo que tarda en volver después.
+const HEARTBEAT_VOLUME = 1.4;
+const HUSH_FADE = 1;
+const HUSH_RETURN = 2;
 
 // Cada cuánto sale un scratch solo: entre y (segundos). Y su volumen, en proporción al de
 // un scratch al remover: los que salen solos, más flojos, de fondo.
@@ -73,6 +80,8 @@ function random(a, b) {
 export function createSound() {
   let ctx = null;
   let master = null;
+  // Todo menos el latido pasa por aquí: es lo que se apaga antes de cada latido.
+  let bed = null;
   // Lo que cambia con la inclinación: las ondas del grave y su filtro.
   let drone = [];
   let lowpass = null;
@@ -94,6 +103,8 @@ export function createSound() {
     master.gain.value = 0;
     const compressor = ctx.createDynamicsCompressor();
     master.connect(compressor).connect(ctx.destination);
+    bed = ctx.createGain();
+    bed.connect(master);
 
     // El filtro que solo deja los graves, y la «respiración»: una onda lentísima (una vuelta
     // cada 14 segundos) que lo abre y lo cierra.
@@ -107,7 +118,7 @@ export function createSound() {
     breathDepth.gain.value = 70;
     breath.connect(breathDepth).connect(lowpass.frequency);
     breath.start();
-    lowpass.connect(master);
+    lowpass.connect(bed);
 
     // Las tres ondas del grave. La octava (la tercera) es la que hace que el bajo se
     // «sienta» en los altavoces pequeños de un móvil o un portátil, que apenas dan 49 Hz.
@@ -163,7 +174,7 @@ export function createSound() {
     level.gain.setValueAtTime(SCRATCH_VOLUME * strength, t - 0.03);
     level.gain.linearRampToValueAtTime(0, t);
 
-    source.connect(band).connect(level).connect(master);
+    source.connect(band).connect(level).connect(bed);
     source.start(now, random(0, 0.9));
     source.stop(t + 0.05);
     busyUntil = t + 0.25;
@@ -180,7 +191,7 @@ export function createSound() {
     const level = ctx.createGain();
     level.gain.setValueAtTime(0.12, now);
     level.gain.exponentialRampToValueAtTime(0.001, now + 0.02);
-    source.connect(high).connect(level).connect(master);
+    source.connect(high).connect(level).connect(bed);
     source.start(now, random(0, 0.9));
     source.stop(now + 0.03);
   }
@@ -195,7 +206,7 @@ export function createSound() {
     level.gain.exponentialRampToValueAtTime(0.0001, at + TIC_LENGTH);
     const side = ctx.createStereoPanner();
     side.pan.value = pan;
-    osc.connect(level).connect(side).connect(master);
+    osc.connect(level).connect(side).connect(bed);
     osc.start(at);
     osc.stop(at + TIC_LENGTH + 0.005);
   }
@@ -208,7 +219,7 @@ export function createSound() {
     level.gain.setValueAtTime(0, at);
     level.gain.linearRampToValueAtTime(0.3, at + 0.002);
     level.gain.exponentialRampToValueAtTime(0.0001, at + 0.08);
-    osc.connect(level).connect(master);
+    osc.connect(level).connect(bed);
     osc.start(at);
     osc.stop(at + 0.1);
   }
@@ -286,6 +297,17 @@ export function createSound() {
     }
   }
 
+  // El latido viene dentro de «seconds» segundos: todo lo demás se apaga en HUSH_FADE
+  // segundos y se queda en silencio hasta el golpe. Mientras, no sale ningún sonido suelto.
+  function hush(seconds) {
+    if (!on) return;
+    const now = ctx.currentTime;
+    bed.gain.cancelScheduledValues(now);
+    bed.gain.setValueAtTime(bed.gain.value, now);
+    bed.gain.linearRampToValueAtTime(0, now + Math.min(HUSH_FADE, seconds));
+    busyUntil = Math.max(busyUntil, now + seconds + 0.6);
+  }
+
   // Un golpe del latido: una onda que cae de 60 a 38 Hz en menos de un quinto de segundo
   // (por eso suena a golpe y no a nota). «strength»: 1 el primero, menos el segundo. Los
   // scratches y los tics esperan a que acabe.
@@ -297,12 +319,19 @@ export function createSound() {
     osc.frequency.exponentialRampToValueAtTime(38, now + 0.18);
     const level = ctx.createGain();
     level.gain.setValueAtTime(0, now);
-    level.gain.linearRampToValueAtTime(0.7 * strength, now + 0.006);
+    level.gain.linearRampToValueAtTime(HEARTBEAT_VOLUME * strength, now + 0.006);
     level.gain.exponentialRampToValueAtTime(0.0001, now + 0.3);
     osc.connect(level).connect(master);
     osc.start(now);
     osc.stop(now + 0.32);
     busyUntil = Math.max(busyUntil, now + 0.6);
+    // Tras el primer golpe (y el segundo, que llega a las 0,3 s), todo lo demás vuelve.
+    if (strength === 1) {
+      bed.gain.cancelScheduledValues(now);
+      bed.gain.setValueAtTime(bed.gain.value, now);
+      bed.gain.setValueAtTime(bed.gain.value, now + 0.6);
+      bed.gain.linearRampToValueAtTime(1, now + 0.6 + HUSH_RETURN);
+    }
   }
 
   // Cada fotograma, con la inclinación del plano (en radianes, alrededor del eje x y del y)
@@ -325,6 +354,7 @@ export function createSound() {
     toggle: () => (on ? stop() : start(), on),
     update,
     heartbeat,
+    hush,
     setShape,
   };
 }

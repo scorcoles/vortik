@@ -114,6 +114,8 @@ heartbeat.onBeat = (strength) => {
   vortex.kick(strength);
   sound.heartbeat(strength);
 };
+// Antes de cada latido, el sonido se apaga: el golpe llega tras un silencio.
+heartbeat.onSoon = (seconds) => sound.hush(seconds);
 
 // El ratón o el dedo: para remover (paso 9) y para inclinar (paso 10).
 const pointer = createPointer(canvas, stage.camera);
