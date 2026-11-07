@@ -25,8 +25,9 @@ import * as THREE from 'three';
 
 const TAU = Math.PI * 2;
 
-// Cuánto más oscuros que el centro son los bordes de la cinta (1 = igual).
-const EDGE_SHADE = 0.72;
+// Cuánto más oscuros que el centro son los bordes de la cinta (1 = igual). Exportada:
+// las tapas de las puntas (drops.js) se oscurecen igual hacia su borde.
+export const EDGE_SHADE = 0.72;
 
 // Cuánto más oscuro es un tramo estrecho que uno ancho (1 = igual).
 const THIN_SHADE = 0.7;
