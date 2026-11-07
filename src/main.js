@@ -27,7 +27,7 @@ import { setupShare } from './share.js';
 const canvas = document.querySelector('[data-vortik]');
 const stage = createStage(canvas, { radius: RADIUS });
 
-const vortex = createVortex();
+let vortex = createVortex();
 stage.scene.add(vortex.object);
 fillNotes(document.querySelector('[data-notes]'), vortex.info);
 
@@ -47,6 +47,32 @@ setupModes((name, style) => {
 
 // El botón de compartir: una foto como se ve ahora, en el modo que esté puesto.
 setupShare(stage, () => mode);
+
+// Doble clic o doble toque: un vórtice nuevo. Se tira el viejo y se crea otro (con sus
+// propios mapas de densidad, fibras y quiebros), pintado en el modo que esté puesto.
+function regenerate() {
+  stage.scene.remove(vortex.object);
+  vortex.dispose();
+  vortex = createVortex();
+  stage.scene.add(vortex.object);
+  vortex.setStyle(mode.style);
+}
+
+// El doble toque lo detectamos a mano (dos toques en menos de 300 ms, a menos de 30 px):
+// en el móvil, el «dblclick» del navegador no llega siempre (con «touch-action: none», el
+// navegador no se encarga de los toques). Con el ratón, igual: dos clics seguidos.
+let lastTap = { time: 0, x: 0, y: 0 };
+canvas.addEventListener('pointerdown', (e) => {
+  if (!e.isPrimary) return;
+  const now = performance.now();
+  const close = Math.hypot(e.clientX - lastTap.x, e.clientY - lastTap.y) < 30;
+  if (now - lastTap.time < 300 && close) {
+    regenerate();
+    lastTap = { time: 0, x: 0, y: 0 };
+  } else {
+    lastTap = { time: now, x: e.clientX, y: e.clientY };
+  }
+});
 
 // El ratón o el dedo: para remover (paso 9) y para inclinar (paso 10).
 const pointer = createPointer(canvas, stage.camera);

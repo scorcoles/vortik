@@ -302,14 +302,14 @@ function createTangle(angle) {
 // fibras tiene, de cuántos puntos está hecha cada una (un filamento del borde no necesita 64: con
 // menos puntos, menos trabajo en cada fotograma), sus quiebros (cuántos puntos de control,
 // cuánto se aparta hacia dentro o fuera y cuánto de lado; el anillo, el que más) y cómo de
-// irregular es su reparto. Cada
+// irregular es su reparto («contrast», el de su mapa de densidad, createDensity). Cada
 // familia tiene su propio mapa: los huecos de las cerdas no coinciden con los del
 // anillo. Los del borde, casi parejos: tienen que cerrar el círculo.
 export const FAMILIES = [
-  { name: 'borde', color: '#ffd166', count: 1400, points: 4, bends: [0, 0, 0], create: createMicro, density: createDensity(0.6) },
-  { name: 'cerdas', color: '#ef476f', count: 500, points: 24, bends: [3, 0.006, 0.1], create: createHair, density: createDensity(3) },
-  { name: 'corrientes', color: '#06d6a0', count: 750, points: 64, bends: [5, 0.02, 0.12], create: createStream, density: createDensity(2) },
-  { name: 'anillo', color: '#4cc9f0', count: 280, points: 64, bends: [7, 0.05, 0.18], create: createTangle, density: createDensity(1.5) },
+  { name: 'borde', color: '#ffd166', count: 1400, points: 4, bends: [0, 0, 0], create: createMicro, contrast: 0.6 },
+  { name: 'cerdas', color: '#ef476f', count: 500, points: 24, bends: [3, 0.006, 0.1], create: createHair, contrast: 3 },
+  { name: 'corrientes', color: '#06d6a0', count: 750, points: 64, bends: [5, 0.02, 0.12], create: createStream, contrast: 2 },
+  { name: 'anillo', color: '#4cc9f0', count: 280, points: 64, bends: [7, 0.05, 0.18], create: createTangle, contrast: 1.5 },
 ];
 
 // Crea todas las fibras y apunta en cada una de qué familia es, cuántos puntos tiene y
@@ -319,6 +319,9 @@ function createFibers() {
   const fibers = [];
   let first = 0;
   FAMILIES.forEach((family, index) => {
+    // Su mapa de densidad, sorteado de nuevo en cada vórtice: así cada uno tiene sus
+    // propias zonas llenas y vacías.
+    family.density = createDensity(family.contrast);
     for (let n = 0; n < family.count; n++) {
       const fiber = family.create(pickAngle(family.density));
       fiber.family = index;
@@ -575,5 +578,14 @@ export function createVortex() {
 
   // «object» va a la escena; «tilt», a tilt.js, para inclinarlo; «spin» es el sistema del
   // remolino, al que pointer.js pasa el cursor.
-  return { object, tilt, spin, update, setStyle, info };
+  // Para tirarlo (al crear uno nuevo, main.js): libera lo que ocupa en la tarjeta gráfica,
+  // sus listas de puntos y sus materiales. Si no, cada vórtice nuevo dejaría el viejo ahí.
+  function dispose() {
+    object.traverse((child) => {
+      child.geometry?.dispose();
+      child.material?.dispose();
+    });
+  }
+
+  return { object, tilt, spin, update, setStyle, info, dispose };
 }
