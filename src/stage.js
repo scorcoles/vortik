@@ -79,5 +79,10 @@ export function createStage(canvas, { radius }) {
     fog.color.set(color);
   }
 
-  return { scene, camera, renderer, start, setBackground };
+  // Pinta un fotograma ahora mismo (para la foto de compartir, share.js).
+  function render() {
+    renderer.render(scene, camera);
+  }
+
+  return { scene, camera, renderer, start, setBackground, render };
 }

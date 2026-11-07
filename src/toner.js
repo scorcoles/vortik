@@ -25,12 +25,16 @@ function random(a, b) {
   return a + Math.random() * (b - a);
 }
 
-let done = false;
+// El mosaico, una vez pintado (lo usa también la foto de compartir, share.js).
+let tile = null;
+
+export function tonerTile() {
+  return tile;
+}
 
 // Pinta el mosaico y lo pone de fondo de «el». Solo la primera vez que se pide.
 export function applyToner(el) {
-  if (done) return;
-  done = true;
+  if (tile) return;
 
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
   const size = Math.round(TONER.tile * dpr);
@@ -71,6 +75,7 @@ export function applyToner(el) {
     }
   }
 
+  tile = canvas;
   el.style.backgroundImage = `url(${canvas.toDataURL()})`;
   // El mosaico tiene dpr veces más píxeles que su tamaño CSS: se muestra a su tamaño CSS.
   el.style.backgroundSize = `${TONER.tile}px`;

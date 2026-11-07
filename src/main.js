@@ -13,6 +13,7 @@
 //   motion.js  → Paso 8 · muelles, inercia y viento: cada punto se mueve por su cuenta
 //   pointer.js → Paso 9 · el cursor, en el sistema del remolino, para remover las fibras
 //   tilt.js    → Paso 10 · clic y arrastrar (o dos dedos) para inclinar el plano
+//   share.js   → compartir una foto del momento
 
 import { createStage } from './stage.js';
 import { createVortex, RADIUS } from './vortex.js';
@@ -21,6 +22,7 @@ import { applyToner } from './toner.js';
 import { fillNotes } from './notes.js';
 import { createPointer } from './pointer.js';
 import { createTilt } from './tilt.js';
+import { setupShare } from './share.js';
 
 const canvas = document.querySelector('[data-vortik]');
 const stage = createStage(canvas, { radius: RADIUS });
@@ -31,7 +33,9 @@ fillNotes(document.querySelector('[data-notes]'), vortex.info);
 
 // Cada vez que cambia el modo: el fondo, el remolino y una clase en <html> (is-portada,
 // is-esquema…) para que style.css cambie el pie y ponga, o no, el desgaste del cartón.
+let mode = null;
 setupModes((name, style) => {
+  mode = { name, style };
   stage.setBackground(style.background);
   vortex.setStyle(style);
   // La suavidad de lente: un desenfoque muy leve de todo el canvas (lo hace el navegador).
@@ -40,6 +44,9 @@ setupModes((name, style) => {
   // La fotocopia se pinta la primera vez que hace falta.
   if (name === 'portada') applyToner(document.querySelector('.toner'));
 });
+
+// El botón de compartir: una foto como se ve ahora, en el modo que esté puesto.
+setupShare(stage, () => mode);
 
 // El ratón o el dedo: para remover (paso 9) y para inclinar (paso 10).
 const pointer = createPointer(canvas, stage.camera);

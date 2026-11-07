@@ -146,6 +146,60 @@ canvas.is-tilting {
   background: var(--c);
 }
 
+/* Compartir: arriba a la derecha, como en vertikis (el icono, de 20px con 4px de relleno),
+   a media luz hasta que pasas por encima. Del color del pie de cada modo. */
+.share {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  z-index: 2;
+  display: block;
+  margin: 0;
+  padding: 4px;
+  border: 0;
+  background: none;
+  color: #fff;
+  line-height: 0;
+  cursor: pointer;
+  opacity: 0.4;
+  transition: opacity 200ms ease;
+}
+
+.share[hidden] {
+  display: none;
+}
+
+.share:hover,
+.share:focus-visible {
+  opacity: 1;
+}
+
+.share:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+
+.share svg {
+  width: 20px;
+  height: 20px;
+}
+
+.is-portada .share {
+  color: #e6e2d6;
+}
+
+.is-esquema .share {
+  color: #c9d1d9;
+}
+
+/* En el móvil, un poco más grande, para el dedo. */
+@media (max-width: 47.99rem) {
+  .share svg {
+    width: 24px;
+    height: 24px;
+  }
+}
+
 /* =========================================================================================
    Modo portada: el cartón del vinilo
    ========================================================================================= */

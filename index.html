@@ -20,6 +20,17 @@
     <!-- El cajetín del modo esquema: qué es y con qué números funciona (src/notes.js). -->
     <div class="notes" data-notes aria-hidden="true"></div>
 
+    <!-- Compartir una foto de cómo está ahora el remolino (src/share.js). Si el navegador
+         no sabe compartir imágenes, no aparece. -->
+    <button type="button" class="share" data-share hidden aria-label="Compartir una imagen del remolino">
+      <svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+        <path d="M8.6 10.5 15.4 6.5M8.6 13.5l6.8 4" fill="none" />
+        <circle cx="18" cy="5" r="3" stroke="none" />
+        <circle cx="6" cy="12" r="3" stroke="none" />
+        <circle cx="18" cy="19" r="3" stroke="none" />
+      </svg>
+    </button>
+
     <!-- Pie con las instrucciones y los créditos. -->
     <p class="credit">
       <span class="credit__tag">vortik</span>
