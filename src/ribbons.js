@@ -18,10 +18,18 @@ const TAU = Math.PI * 2;
 
 // Ancho de la cinta a la fracción t de su recorrido (0 = principio, 1 = final).
 function widthAt(fiber, t) {
-  // Se afina hacia las puntas (sin llegar a 0, para que la gota de la punta quede unida)…
-  const taper = Math.max(0.15, Math.sin(Math.PI * t) ** 0.4);
-  // …y engorda y adelgaza a lo largo, como un chorro de pintura que no sale igual.
+  // Engorda y adelgaza a lo largo, como un chorro de pintura que no sale igual.
   const lumps = 1 + 0.4 * Math.sin(t * fiber.lumps * TAU + fiber.phase * 2);
+
+  if (fiber.profile === 'club') {
+    // Cerilla: fina en la base y cada vez más gorda hacia la punta libre, donde la espera
+    // su gota. «towardTip» va de 0 en la base a 1 en la punta.
+    const towardTip = fiber.dropAt === 1 ? t : 1 - t;
+    return fiber.width * (0.2 + 0.8 * towardTip ** 1.5) * lumps;
+  }
+
+  // Pintura: se afina hacia las dos puntas (sin llegar a 0, para que la gota quede unida).
+  const taper = Math.max(0.15, Math.sin(Math.PI * t) ** 0.4);
   return fiber.width * taper * lumps;
 }
 

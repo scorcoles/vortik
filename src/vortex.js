@@ -61,14 +61,17 @@ function chance(p) {
 //   angle       en qué ángulo arranca;
 //   from, to    a qué radio empieza y a qué radio acaba;
 //   turn        cuánto gira de más (o de menos) respecto a la espiral, de punta a punta;
+//   curl        cuánto se tuerce de más cerca de su punta libre: el ganchito (paso 4);
 //   wobble      cuánto se ondula (paso 4);
 //   waves       cuántas ondas hace a lo largo (paso 4);
 //   phase       en qué punto de la onda empieza, para que no ondulen todas a la vez;
 //   brightness  lo blanca que es;
 //   width       su grosor: 0 = una línea de 1 píxel; si no, una cinta así de ancha (paso 6);
+//   profile     cómo cambia su grosor (paso 6): 'paint', fina en las puntas y gorda en
+//               medio; 'club', como una cerilla, fina en la base y gorda en la punta libre;
 //   lumps       cuántas veces engorda y adelgaza a lo largo, si es una cinta (paso 6);
 //   drop        el radio de la gotita de una punta, o 0 si no tiene (paso 6);
-//   dropAt      en qué punta está la gotita: 0 = al principio, 1 = al final (paso 6).
+//   dropAt      su punta libre, la de la gotita: 0 = al principio, 1 = al final (paso 6).
 //
 // Esta función escribe en «out», a partir de la posición «i» (x, y, z seguidos), el punto
 // de la fibra que está a la fracción t de su recorrido (0 = principio, 1 = final).
@@ -80,7 +83,10 @@ function fiberPoint(fiber, t, out, i) {
 
   // El radio va de «from» a «to», más la ondulación. Nunca dentro del agujero.
   const r = Math.max(HOLE, fiber.from + (fiber.to - fiber.from) * t + fiber.wobble * wave);
-  const a = fiber.angle + spiralAngle(r) + fiber.turn * t;
+  // El ganchito: un giro de más que apenas se nota en la base y crece hacia la punta libre
+  // (al cubo: casi nada hasta el último tramo).
+  const towardTip = fiber.dropAt === 1 ? t : 1 - t;
+  const a = fiber.angle + spiralAngle(r) + fiber.turn * t + fiber.curl * towardTip ** 3;
 
   out[i] = r * Math.cos(a);
   out[i + 1] = r * Math.sin(a);
@@ -121,22 +127,30 @@ function pickAngle(density) {
   }
 }
 
-// Familia 1 · Pelitos: cortos y finos, pegados al borde del agujero. Casi rectos.
+// Familia 1 · Pelitos: cortos, pegados al borde del agujero. Más de la mitad son
+// «cerillas»: nacen finos en el borde y engordan hasta una puntita redonda. Cada uno se
+// tuerce a su manera, alguno con un ganchito al final.
 function createHair(angle) {
+  const club = chance(0.6);
+  const width = club ? random(0.003, 0.009) : 0;
   return {
     angle,
-    from: HOLE,
+    // No todos nacen justo en el borde.
+    from: HOLE + random(0, 0.012),
     // Casi todos muy cortos y unos pocos más largos (al cuadrado, el azar se va hacia 0).
-    to: HOLE + 0.015 + 0.13 * Math.random() ** 2,
-    turn: 0,
-    wobble: 0.002,
-    waves: 1,
+    to: HOLE + 0.03 + 0.2 * Math.random() ** 1.5,
+    turn: random(-0.15, 0.15),
+    curl: random(-0.35, 0.35),
+    wobble: random(0.001, 0.006),
+    waves: random(0.5, 1.5),
     phase: random(0, TAU),
-    brightness: random(0.25, 0.7),
-    // Siempre finos; alguno acaba en una gotita diminuta, en la punta de fuera.
-    width: 0,
-    lumps: 0,
-    drop: chance(0.12) ? random(0.002, 0.004) : 0,
+    brightness: random(0.4, 0.9),
+    width,
+    profile: 'club',
+    lumps: random(0.5, 2),
+    // Las cerillas casi siempre acaban en su gota, del ancho de la punta: así la punta
+    // queda redonda. Los finos, a veces, en una gotita diminuta.
+    drop: club ? (chance(0.85) ? width * random(0.5, 0.75) : 0) : chance(0.12) ? random(0.002, 0.004) : 0,
     dropAt: 1,
   };
 }
@@ -146,20 +160,30 @@ function createHair(angle) {
 function createStream(angle) {
   const from = HOLE + (RADIUS - HOLE) * random(0.3, 1);
   const to = Math.random() < 0.5 ? HOLE : Math.max(HOLE, from - random(0.1, 0.45));
+  // Una de cada tres, cerilla fina: engorda hacia la punta de fuera, que es la libre (la
+  // de dentro se pierde en el agujero). Unas pocas, chorros estrechos. El resto, finas.
+  let width = 0;
+  let profile = 'paint';
+  if (chance(0.35)) {
+    width = random(0.002, 0.005);
+    profile = 'club';
+  } else if (chance(0.05)) {
+    width = random(0.004, 0.009);
+  }
   return {
     angle,
     from,
     to,
     turn: random(-0.15, 0.15),
+    curl: random(-0.25, 0.25),
     wobble: random(0.003, 0.02),
     waves: random(1, 3),
     phase: random(0, TAU),
     brightness: random(0.3, 1),
-    // Casi todas finas; unas pocas, chorros estrechos. La gotita, en la punta de fuera
-    // (la de dentro se pierde en el agujero).
-    width: chance(0.05) ? random(0.004, 0.009) : 0,
+    width,
+    profile,
     lumps: random(1, 3),
-    drop: chance(0.15) ? random(0.003, 0.006) : 0,
+    drop: profile === 'club' && chance(0.7) ? width * random(0.5, 0.75) : chance(0.15) ? random(0.003, 0.006) : 0,
     dropAt: 0,
   };
 }
@@ -192,7 +216,9 @@ function createTangle(angle) {
     waves: splash ? 1 : random(1.5, 3.5),
     phase: random(0, TAU),
     brightness: random(0.5, 1),
+    curl: 0,
     width,
+    profile: 'paint',
     lumps: random(1, 4),
     drop,
     // Las salpicaduras, en la punta que sale disparada; las demás, en cualquiera.
@@ -203,7 +229,7 @@ function createTangle(angle) {
 // Cuántas fibras de cada familia, y cómo de irregular es su reparto. Cada familia tiene
 // su propio mapa: los huecos de los pelitos no coinciden con los de la maraña.
 const FAMILIES = [
-  { count: 1000, create: createHair, density: createDensity(3) },
+  { count: 700, create: createHair, density: createDensity(3) },
   { count: 1100, create: createStream, density: createDensity(2) },
   { count: 350, create: createTangle, density: createDensity(1.5) },
 ];
