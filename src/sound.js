@@ -27,7 +27,7 @@ const FADE = 2;
 // Cada cuánto sale un scratch solo: entre y (segundos). Y su volumen, en proporción al de
 // un scratch al remover: los que salen solos, más flojos, de fondo.
 const SCRATCH_EVERY = [6, 16];
-const SCRATCH_AUTO = [0.35, 0.55];
+const SCRATCH_AUTO = [0.4, 0.63];
 
 // Cada cuánto sale una ráfaga de tics (segundos), cuántos tics, cada cuánto va uno detrás
 // de otro (segundos), sus frecuencias posibles (Hz) y su volumen.
