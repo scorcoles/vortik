@@ -14,7 +14,8 @@
 //   wireframe     las cintas y las gotas, en alambre: se ven sus triángulos;
 //   guides        las guías del modo wire (guides.js);
 //   soften        un desenfoque de medio píxel sobre todo, en píxeles: en WebGL los bordes
-//                 salen perfectos y el blanco corta; la foto tiene la suavidad de la lente.
+//                 salen perfectos y el blanco corta; la foto tiene la suavidad de la lente;
+//   phone         (si lo tiene) los ajustes que cambian en el móvil.
 //
 // Como en vertikis: «Prev» y «Next» en el pie, o las flechas del teclado, pasan de uno a
 // otro, y la dirección lleva el modo (#cover, #wire) para poder compartirlo.
@@ -32,6 +33,9 @@ export const MODES = {
     wireframe: false,
     guides: false,
     soften: 0.35,
+    // En el móvil, las líneas sumándose se veían demasiado contundentes (menos resolución y
+    // sin la suavidad de lente): menos opacas y menos.
+    phone: { lineOpacity: 0.28, lineShare: 0.55 },
   },
 
   // Cover: como el vinilo. Fondo de cartón gris carbón, pintura blanco roto, menos

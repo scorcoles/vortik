@@ -672,7 +672,9 @@ export function createVortex() {
   const paint = new THREE.Color();
   const color = new THREE.Color();
 
-  function setStyle(style) {
+  function setStyle(modeStyle) {
+    // En el móvil, con los ajustes propios del modo para el móvil (si los tiene).
+    const style = isPhone() && modeStyle.phone ? { ...modeStyle, ...modeStyle.phone } : modeStyle;
     // El color de cada fibra: en «tone», el color de la pintura del modo, más claro o más
     // oscuro según lo blanca que sea la fibra; en «family», el color de su familia.
     paint.set(style.paint);
