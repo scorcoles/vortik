@@ -15,7 +15,7 @@
 // patches  cuántas zonas gastadas, y patch: cuántas motas en cada una;
 // reach    lo grande que es una zona gastada (entre y, en píxeles CSS);
 // streaks  cuántas rayas, y gap: cada cuánto se rompen.
-const TONER = { tile: 640, dust: 0.012, patches: 6, patch: 3000, reach: [30, 100], streaks: 5, gap: 18 };
+const TONER = { tile: 640, dust: 0.012, patches: 6, patch: 3000, reach: [30, 100], streaks: 3, gap: 18 };
 
 // Los colores de las motas: el de la pintura y el negro.
 const LIGHT = '230, 226, 214';

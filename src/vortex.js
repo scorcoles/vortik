@@ -55,6 +55,24 @@ function chance(p) {
   return Math.random() < p;
 }
 
+// Los quiebros: una curva al azar, suave e irregular, hecha con unos pocos «puntos de
+// control». Cada uno es un desvío al azar entre -size y size; entre uno y el siguiente
+// pasamos con una «S» suave (smoothstep). Una onda de senos se repite; esto no: cada
+// fibra se abre, se cierra y da un quiebro donde le toca a ella.
+function createBends(count, size) {
+  return Array.from({ length: count }, () => random(-size, size));
+}
+
+function bendAt(bends, t) {
+  if (bends.length < 2) return 0;
+  // En qué tramo cae t (entre el punto de control «k» y el siguiente) y por dónde va de él.
+  const x = t * (bends.length - 1);
+  const k = Math.min(Math.floor(x), bends.length - 2);
+  const f = x - k;
+  const smooth = f * f * (3 - 2 * f);
+  return bends[k] + (bends[k + 1] - bends[k]) * smooth;
+}
+
 // Una fibra es un trozo de la corriente. Para dibujarla basta con saber (el número de
 // puntos de cada una lo pone su familia, en FAMILIES):
 //   angle       en qué ángulo arranca;
@@ -63,6 +81,8 @@ function chance(p) {
 //   curl        cuánto se tuerce de más cerca de su punta libre: el ganchito (paso 4);
 //   wobble      cuánto se ondula (paso 4);
 //   waves       cuántas ondas hace a lo largo (paso 4);
+//   bendsR/A    sus quiebros: los puntos de control de cuánto se aparta de la espiral, hacia
+//               dentro o fuera (R) y de lado (A) (paso 4; los pone su familia);
 //   phase       en qué punto de la onda empieza, para que no ondulen todas a la vez;
 //   brightness  lo blanca que es;
 //   width       su grosor: 0 = una línea de 1 píxel; si no, una cinta así de ancha (paso 6);
@@ -75,17 +95,22 @@ function chance(p) {
 // Esta función escribe en «out», a partir de la posición «i» (x, y, z seguidos), el punto
 // de la fibra que está a la fracción t de su recorrido (0 = principio, 1 = final).
 function fiberPoint(fiber, t, out, i) {
-  // La ondulación: dos ondas de distinta frecuencia sumadas. Una sola se ve mecánica, como
-  // un muelle; con dos, la fibra parece que se ha retorcido sola.
+  // La ondulación fina: dos ondas de distinta frecuencia sumadas. Una sola se ve mecánica,
+  // como un muelle; con dos, la fibra parece que tiembla sola.
   const s = t * fiber.waves * TAU + fiber.phase;
   const wave = Math.sin(s) + 0.5 * Math.sin(2.7 * s + 1.3);
 
-  // El radio va de «from» a «to», más la ondulación. Nunca dentro del agujero.
-  const r = Math.max(HOLE, fiber.from + (fiber.to - fiber.from) * t + fiber.wobble * wave);
+  // Los quiebros (paso 4): cuánto se aparta la fibra de la espiral, de lado y hacia
+  // dentro o fuera, en este punto de su recorrido.
+  const bendR = bendAt(fiber.bendsR, t);
+  const bendA = bendAt(fiber.bendsA, t);
+
+  // El radio va de «from» a «to», más la ondulación y el quiebro. Nunca dentro del agujero.
+  const r = Math.max(HOLE, fiber.from + (fiber.to - fiber.from) * t + fiber.wobble * wave + bendR);
   // El ganchito: un giro de más que apenas se nota en la base y crece hacia la punta libre
   // (al cubo: casi nada hasta el último tramo).
   const towardTip = fiber.dropAt === 1 ? t : 1 - t;
-  const a = fiber.angle + spiralAngle(r) + fiber.turn * t + fiber.curl * towardTip ** 3;
+  const a = fiber.angle + spiralAngle(r) + fiber.turn * t + fiber.curl * towardTip ** 3 + bendA;
 
   out[i] = r * Math.cos(a);
   out[i + 1] = r * Math.sin(a);
@@ -126,7 +151,7 @@ function pickAngle(density) {
   }
 }
 
-// Familia 1 · Micropelos: diminutos (en la portada, de menos de un milímetro) y
+// Familia 1 · Borde: filamentos diminutos (en la portada, de menos de un milímetro) y
 // muchísimos, justo en el borde del agujero. Uno a uno casi no se ven, pero juntos
 // dibujan el círculo: son los que hacen que el borde del agujero sea tan nítido.
 // (La foto se hizo con un rodillo de pintura girando en un taladro: el agujero es el
@@ -150,7 +175,7 @@ function createMicro(angle) {
   };
 }
 
-// Familia 2 · Pelitos: cortos, pegados al borde del agujero. Más de la mitad son
+// Familia 2 · Cerdas: cortas, pegadas al borde del agujero. Más de la mitad son
 // «cerillas»: nacen finos en el borde y engordan hasta una puntita redonda. Cada uno se
 // tuerce a su manera, alguno con un ganchito al final.
 function createHair(angle) {
@@ -206,7 +231,7 @@ function createStream(angle) {
   };
 }
 
-// Familia 4 · Maraña: el anillo de fuera. Fibras que dan vueltas casi en círculo, muy
+// Familia 4 · Anillo: la maraña de fuera. Fibras que dan vueltas casi en círculo, muy
 // onduladas, que se cruzan unas con otras. Algunas salen disparadas hacia fuera, como
 // las salpicaduras de la pintura.
 function createTangle(angle) {
@@ -219,7 +244,7 @@ function createTangle(angle) {
   else if (chance(0.015)) width = random(0.02, 0.035);
   else if (chance(0.12)) width = random(0.003, 0.009);
 
-  // La pintura densa no se mezcla con la zona de dentro: las fibras finas de la maraña
+  // La pintura densa no se mezcla con la zona de dentro: las fibras finas del anillo
   // empiezan desde 0,72, pero las cintas, solo en el anillo de fuera, desde 0,84.
   const from = width ? random(0.84, 1.02) : random(0.72, 1.02);
 
@@ -246,19 +271,23 @@ function createTangle(angle) {
     drop,
     // Las salpicaduras, en la punta que sale disparada; las demás, en cualquiera.
     dropAt: splash || chance(0.5) ? 1 : 0,
+    // Las salpicaduras salen casi rectas: sus quiebros, mucho más pequeños (paso 4).
+    bendScale: splash ? 0.15 : 1,
   };
 }
 
 // Las familias. De cada una: su nombre y su color en el modo esquema (paso 7), cuántas
-// fibras tiene, de cuántos puntos está hecha cada una (un micropelo no necesita 64: con
-// menos puntos, menos trabajo en cada fotograma) y cómo de irregular es su reparto. Cada
-// familia tiene su propio mapa: los huecos de los pelitos no coinciden con los de la
-// maraña. Los micropelos, casi parejos: tienen que cerrar el círculo.
+// fibras tiene, de cuántos puntos está hecha cada una (un filamento del borde no necesita 64: con
+// menos puntos, menos trabajo en cada fotograma), sus quiebros (cuántos puntos de control,
+// cuánto se aparta hacia dentro o fuera y cuánto de lado; el anillo, el que más) y cómo de
+// irregular es su reparto. Cada
+// familia tiene su propio mapa: los huecos de las cerdas no coinciden con los del
+// anillo. Los del borde, casi parejos: tienen que cerrar el círculo.
 export const FAMILIES = [
-  { name: 'micropelos', color: '#ffd166', count: 1800, points: 4, create: createMicro, density: createDensity(0.6) },
-  { name: 'pelitos', color: '#ef476f', count: 700, points: 24, create: createHair, density: createDensity(3) },
-  { name: 'corrientes', color: '#06d6a0', count: 1100, points: 64, create: createStream, density: createDensity(2) },
-  { name: 'maraña', color: '#4cc9f0', count: 350, points: 64, create: createTangle, density: createDensity(1.5) },
+  { name: 'borde', color: '#ffd166', count: 1800, points: 4, bends: [0, 0, 0], create: createMicro, density: createDensity(0.6) },
+  { name: 'cerdas', color: '#ef476f', count: 700, points: 24, bends: [3, 0.006, 0.1], create: createHair, density: createDensity(3) },
+  { name: 'corrientes', color: '#06d6a0', count: 1100, points: 64, bends: [5, 0.02, 0.12], create: createStream, density: createDensity(2) },
+  { name: 'anillo', color: '#4cc9f0', count: 350, points: 64, bends: [7, 0.05, 0.18], create: createTangle, density: createDensity(1.5) },
 ];
 
 // Crea todas las fibras y apunta en cada una de qué familia es, cuántos puntos tiene y
@@ -274,6 +303,10 @@ function createFibers() {
       fiber.points = family.points;
       fiber.first = first;
       fiber.rank = Math.random();
+      const [bends, sizeR, sizeA] = family.bends;
+      const scale = fiber.bendScale ?? 1;
+      fiber.bendsR = createBends(bends, sizeR * scale);
+      fiber.bendsA = createBends(bends, sizeA * scale);
       first += family.points;
       fibers.push(fiber);
     }
@@ -421,5 +454,8 @@ export function createVortex() {
     guides.visible = style.guides;
   }
 
-  return { object, update, setStyle };
+  // Los números del remolino, para el cajetín del modo esquema (notes.js).
+  const info = { fibers: fibers.length, points: totalPoints, spin: SPIN };
+
+  return { object, update, setStyle, info };
 }

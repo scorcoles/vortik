@@ -82,27 +82,56 @@ canvas {
   outline-offset: 1px;
 }
 
-/* La leyenda del esquema: qué color es cada familia. Solo en el modo esquema. */
-.credit__legend {
+/* El cajetín del modo esquema, como el del modo wire de vertikis: abajo a la derecha,
+   encima del pie, filas separadas por una línea fina. En pantallas estrechas no cabe y
+   no se ve. */
+.notes {
+  position: fixed;
+  right: 16px;
+  bottom: 44px;
+  z-index: 2;
   display: none;
+  width: 230px;
+  border: 1px solid #c9d1d9;
+  background: #0e1116;
+  color: rgba(201, 209, 217, 0.75);
+  font: 10px/18px ui-monospace, Menlo, Consolas, monospace;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  pointer-events: none;
 }
 
-.is-esquema .credit__legend {
+.is-esquema .notes {
   display: block;
-  margin-top: 4px;
 }
 
-.credit__legend i {
+@media (max-width: 39.99rem) {
+  .is-esquema .notes {
+    display: none;
+  }
+}
+
+.notes div {
+  padding: 0 10px;
+  white-space: nowrap;
+}
+
+.notes div + div {
+  border-top: 1px solid rgba(201, 209, 217, 0.4);
+}
+
+/* La primera fila, el título, más marcada. */
+.notes div:first-child {
+  color: #c9d1d9;
+}
+
+/* El cuadrito del color de cada familia. */
+.notes i {
   display: inline-block;
-  width: 0.8em;
-  height: 0.8em;
-  margin: 0 0.4em 0 0.8em;
+  width: 8px;
+  height: 8px;
+  margin-right: 8px;
   background: var(--c);
-  vertical-align: -0.05em;
-}
-
-.credit__legend i:first-child {
-  margin-left: 0;
 }
 
 /* =========================================================================================
@@ -176,7 +205,7 @@ canvas {
   z-index: 1;
   display: none;
   pointer-events: none;
-  opacity: 0.45;
+  opacity: 0.35;
 }
 
 .is-portada .toner {

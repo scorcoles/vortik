@@ -9,17 +9,20 @@
 //   modes.js   → Paso 7 · los modos de visualización (noche, portada, esquema)
 //   guides.js  → Paso 7 · las guías del modo esquema
 //   toner.js   → Paso 7 · el desgaste de fotocopia del modo portada
+//   notes.js   → Paso 7 · el cajetín del modo esquema
 
 import { createStage } from './stage.js';
 import { createVortex, RADIUS } from './vortex.js';
 import { setupModes } from './modes.js';
 import { applyToner } from './toner.js';
+import { fillNotes } from './notes.js';
 
 const canvas = document.querySelector('[data-vortik]');
 const stage = createStage(canvas, { radius: RADIUS });
 
 const vortex = createVortex();
 stage.scene.add(vortex.object);
+fillNotes(document.querySelector('[data-notes]'), vortex.info);
 
 // Cada vez que cambia el modo: el fondo, el remolino y una clase en <html> (is-portada,
 // is-esquema…) para que style.css cambie el pie y ponga, o no, el desgaste del cartón.
