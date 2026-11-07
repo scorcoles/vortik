@@ -24,9 +24,9 @@ export const MODES = {
   // con un punto cálido (algo de marrón): el negro puro, con el blanco encima, corta.
   noche: {
     background: '#100e0b',
-    paint: '#f5f4f0',
+    paint: '#fffdf8',
     palette: 'tone',
-    lineOpacity: 0.35,
+    lineOpacity: 0.45,
     lineBlending: 'add',
     lineShare: 0.8,
     wireframe: false,
