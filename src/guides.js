@@ -1,8 +1,8 @@
 // =========================================================================================
-// Paso 7 · Las guías del modo esquema: lo que no se ve, dibujado
+// Paso 7 · Las guías del modo wire: lo que no se ve, dibujado
 // =========================================================================================
 //
-// En el modo esquema dibujamos encima las reglas con las que se hace el remolino:
+// En el modo wire dibujamos encima las reglas con las que se hace el remolino:
 //   - el agujero y el borde exterior, dos círculos;
 //   - la corriente: unas cuantas espirales «puras», sin ondular, hundiéndose en el embudo;
 //   - los mapas de densidad de cada familia (paso 4), como una curva alrededor del borde:

@@ -1,17 +1,17 @@
 // =========================================================================================
-// Paso 7 · El cajetín del modo esquema
+// Paso 7 · El cajetín del modo wire
 // =========================================================================================
 //
 // Como en el modo wire de vertikis: una ficha abajo a la derecha que dice qué es esto y
 // con qué números funciona. Una fila por línea; las familias, con el cuadrito de su color
-// (el mismo con el que se pintan en el esquema).
+// (el mismo con el que se pintan en el modo wire).
 
 import { RADIUS, HOLE, FAMILIES, SPIRAL } from './vortex.js';
 
 // Rellena el cajetín «el» con los números del remolino («info», de createVortex).
 export function fillNotes(el, info) {
   const rows = [
-    'VORTIK · ESQUEMA',
+    'VORTIK · WIRE',
     SPIRAL === 'log' ? 'ESPIRAL LOG. + EMBUDO' : 'EVOLVENTE + EMBUDO',
     'MUELLES + INERCIA + CURSOR',
     // Los fotogramas por segundo, de verdad: los va poniendo createFps (abajo).

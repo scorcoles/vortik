@@ -10,7 +10,7 @@
 //   - WebGL borra su imagen en cuanto el navegador la enseña. Así que, al pulsar, pintamos
 //     un fotograma y lo copiamos en el acto, sin esperar a nada.
 //   - Parte de lo que se ve no está en el canvas: el cartón y la fotocopia del modo
-//     portada son capas de HTML, y la suavidad de lente es un filtro CSS. Las rehacemos
+//     cover son capas de HTML, y la suavidad de lente es un filtro CSS. Las rehacemos
 //     en la foto, para que salga como se ve.
 
 import { tonerTile } from './toner.js';
@@ -71,7 +71,7 @@ export function setupShare(stage, current) {
     o.drawImage(canvas, 0, 0);
     o.filter = 'none';
 
-    if (name === 'portada') {
+    if (name === 'cover') {
       // El cartón: el grano en mosaico y las manchas a toda la foto, mezclados con
       // «soft-light» como en style.css; los bordes, algo más oscuros; y la fotocopia.
       o.globalCompositeOperation = 'soft-light';

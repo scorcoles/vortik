@@ -89,7 +89,7 @@ canvas.is-tilting {
   outline-offset: 1px;
 }
 
-/* El cajetín del modo esquema, como el del modo wire de vertikis: abajo a la derecha,
+/* El cajetín del modo wire, como el del modo wire de vertikis: abajo a la derecha,
    encima del pie, filas separadas por una línea fina. En el móvil, se despliega con «Info»
    (más abajo). */
 .notes {
@@ -108,11 +108,11 @@ canvas.is-tilting {
   pointer-events: none;
 }
 
-.is-esquema .notes {
+.is-wire .notes {
   display: block;
 }
 
-/* «Info», en el pie: solo en el móvil y en el modo esquema (más abajo). */
+/* «Info», en el pie: solo en el móvil y en el modo wire (más abajo). */
 .credit__info {
   display: none;
 }
@@ -121,11 +121,11 @@ canvas.is-tilting {
    del texto. El pie ocupa más o menos líneas según la pantalla: su alto
    lo mide notes.js y lo deja en --credit-height. */
 @media (max-width: 39.99rem) {
-  .is-esquema .notes {
+  .is-wire .notes {
     display: none;
   }
 
-  .is-esquema.is-notes-open .notes {
+  .is-wire.is-notes-open .notes {
     display: block;
   }
 
@@ -139,7 +139,7 @@ canvas.is-tilting {
     line-height: 17px;
   }
 
-  .is-esquema .credit__info {
+  .is-wire .credit__info {
     display: inline-block;
   }
 }
@@ -232,13 +232,21 @@ canvas.is-tilting {
   height: 20px;
 }
 
-.is-portada .sound,
-.is-portada .share {
+/* El altavoz, a la vista, se queda pequeño al lado de compartir: un 50 % más grande, sin
+   cambiar el sitio que ocupa (el margen negativo se come lo que crece). */
+.sound svg {
+  width: 30px;
+  height: 30px;
+  margin: -5px;
+}
+
+.is-cover .sound,
+.is-cover .share {
   color: #e6e2d6;
 }
 
-.is-esquema .sound,
-.is-esquema .share {
+.is-wire .sound,
+.is-wire .share {
   color: #c9d1d9;
 }
 
@@ -249,21 +257,27 @@ canvas.is-tilting {
     width: 24px;
     height: 24px;
   }
+
+  .sound svg {
+    width: 36px;
+    height: 36px;
+    margin: -6px;
+  }
 }
 
 /* =========================================================================================
-   Modo portada: el cartón del vinilo
+   modo cover: el cartón del vinilo
    ========================================================================================= */
 
-.is-portada body {
+.is-cover body {
   background: #2a2926;
 }
 
-.is-portada .credit {
+.is-cover .credit {
   color: #e6e2d6;
 }
 
-.is-portada .credit__tag {
+.is-cover .credit__tag {
   background: #e6e2d6;
   color: #2a2926;
 }
@@ -289,7 +303,7 @@ canvas.is-tilting {
   mix-blend-mode: soft-light;
 }
 
-.is-portada .wear {
+.is-cover .wear {
   display: block;
 }
 
@@ -325,20 +339,20 @@ canvas.is-tilting {
   opacity: 0.35;
 }
 
-.is-portada .toner {
+.is-cover .toner {
   display: block;
 }
 
-/* Modo esquema: fondo azul noche y el pie en gris claro. */
-.is-esquema body {
+/* modo wire: fondo azul noche y el pie en gris claro. */
+.is-wire body {
   background: #0e1116;
 }
 
-.is-esquema .credit {
+.is-wire .credit {
   color: #c9d1d9;
 }
 
-.is-esquema .credit__tag {
+.is-wire .credit__tag {
   background: #c9d1d9;
   color: #0e1116;
 }

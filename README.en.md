@@ -9,7 +9,7 @@ A whirl of paint fibres spinning around a black hole, swaying with its own inert
 - **Move the mouse or your finger** over it: it stirs the fibres, which settle back on their own.
 - **Drag** (on a phone, with **two fingers**): tilts the plane. Let go and it levels out again.
 - **Double-click** (or double-tap): a new vortex, different every time.
-- **← Prev · Next →** in the footer, or the arrow keys: three ways to see it, **noche** (white on black), **portada** (like the record sleeve, worn cardboard and all) and **esquema** (each fibre family in its own colour, with guides and numbers).
+- **← Prev · Next →** in the footer, or the arrow keys: three ways to see it, **noche** (white on black), **cover** (like the record sleeve, worn cardboard and all) and **wire** (each fibre family in its own colour, with guides and numbers).
 - **Share** (top right): a photo of the moment.
 
 An experiment by [VERTIK](https://www.vertik.net). A tribute to the cover of [*Dysnomia*](https://www.youtube.com/watch?v=BiVRDuIUKfA&list=OLAK5uy_l8Qxdj6Uvs5vhsUzVTHRmUoHcGrPncBwA) by Dawn of Midi (2013): a photo of white paint flung by a roller spinning on a drill. The photo isn't used here: everything is generated in code.

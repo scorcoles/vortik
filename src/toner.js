@@ -1,5 +1,5 @@
 // =========================================================================================
-// Paso 7 · El desgaste de fotocopia (modo portada)
+// Paso 7 · El desgaste de fotocopia (modo cover)
 // =========================================================================================
 //
 // Como en el modo evil de vertikis: un mosaico de motas que se repite por toda la pantalla.

@@ -9,7 +9,7 @@ Un remolino de fibras de pintura que gira alrededor de un agujero negro, se mece
 - **Mueve el ratón o el dedo** por encima: remueve las fibras, que vuelven solas a su sitio.
 - **Arrastra** (en el móvil, con **dos dedos**): inclina el plano. Al soltar, vuelve a plano.
 - **Doble clic** (o doble toque): un vórtice nuevo, distinto cada vez.
-- **← Prev · Next →** en el pie, o las flechas del teclado: tres maneras de verlo, **noche** (blanco sobre negro), **portada** (como el vinilo, con su cartón gastado) y **esquema** (cada familia de fibras de un color, las guías y los números).
+- **← Prev · Next →** en el pie, o las flechas del teclado: tres maneras de verlo, **noche** (blanco sobre negro), **cover** (como el vinilo, con su cartón gastado) y **wire** (cada familia de fibras de un color, las guías y los números).
 - **Compartir** (arriba a la derecha): una foto del momento.
 
 Un experimento de [VERTIK](https://www.vertik.net). Homenaje a la portada de [*Dysnomia*](https://www.youtube.com/watch?v=BiVRDuIUKfA&list=OLAK5uy_l8Qxdj6Uvs5vhsUzVTHRmUoHcGrPncBwA), de Dawn of Midi (2013): una foto de pintura blanca lanzada por un rodillo que giraba en un taladro. Aquí no se usa la foto: todo se genera con código.
@@ -43,7 +43,7 @@ Los comentarios del código lo explican paso a paso.
 
 | Archivo | Qué es |
 | --- | --- |
-| `index.html` | La página: el canvas, las capas del modo portada, el botón de compartir y el pie. |
+| `index.html` | La página: el canvas, las capas del modo cover, el botón de compartir y el pie. |
 | `style.css` | Pantalla completa, el pie, los modos y el desgaste del cartón. |
 | `src/main.js` | Junta las piezas. |
 | `src/stage.js` | El escenario de Three.js: cámara, tamaño, niebla y el bucle. |
@@ -51,7 +51,7 @@ Los comentarios del código lo explican paso a paso.
 | `src/ribbons.js` · `src/drops.js` | Las cintas de pintura gruesa y las gotas y puntas redondas. |
 | `src/motion.js` | Muelles, inercia, viento y el cursor. |
 | `src/pointer.js` · `src/tilt.js` | El cursor en el sistema del remolino, y la inclinación. |
-| `src/modes.js` · `src/guides.js` · `src/notes.js` · `src/toner.js` | Los modos, las guías y el cajetín del esquema, y la fotocopia de la portada. |
+| `src/modes.js` · `src/guides.js` · `src/notes.js` · `src/toner.js` | Los modos, las guías y el cajetín del modo wire, y la fotocopia del modo cover. |
 | `src/share.js` | La foto para compartir. |
 
 ## Licencia

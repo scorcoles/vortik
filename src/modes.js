@@ -12,12 +12,12 @@
 //                 'normal': la de encima tapa a la de debajo;
 //   lineShare     qué parte de las líneas finas se pinta (1 = todas);
 //   wireframe     las cintas y las gotas, en alambre: se ven sus triángulos;
-//   guides        las guías del esquema (guides.js);
+//   guides        las guías del modo wire (guides.js);
 //   soften        un desenfoque de medio píxel sobre todo, en píxeles: en WebGL los bordes
 //                 salen perfectos y el blanco corta; la foto tiene la suavidad de la lente.
 //
 // Como en vertikis: «Prev» y «Next» en el pie, o las flechas del teclado, pasan de uno a
-// otro, y la dirección lleva el modo (#portada, #esquema) para poder compartirlo.
+// otro, y la dirección lleva el modo (#cover, #wire) para poder compartirlo.
 
 export const MODES = {
   // Noche: blanco sobre negro, con las líneas sumándose. El primero que hicimos. El negro,
@@ -34,10 +34,10 @@ export const MODES = {
     soften: 0.35,
   },
 
-  // Portada: como el vinilo. Fondo de cartón gris carbón, pintura blanco roto, menos
+  // Cover: como el vinilo. Fondo de cartón gris carbón, pintura blanco roto, menos
   // líneas y sin sumarse (la portada es más aireada que «noche»). El grano y el desgaste
   // del cartón los pone style.css, encima del canvas.
-  portada: {
+  cover: {
     background: '#2a2926',
     paint: '#e9e6dc',
     palette: 'tone',
@@ -49,9 +49,9 @@ export const MODES = {
     soften: 0.45,
   },
 
-  // Esquema: para ver qué está pasando. Cada familia de su color, las cintas en alambre,
+  // Wire: para ver qué está pasando. Cada familia de su color, las cintas en alambre,
   // menos líneas (para que se distinga algo) y las guías.
-  esquema: {
+  wire: {
     background: '#0e1116',
     paint: '#ffffff',
     palette: 'family',
@@ -98,8 +98,13 @@ export function setupModes(apply) {
     stepMode(e.key === 'ArrowLeft' ? -1 : 1);
   });
 
-  // Al abrir una dirección con #portada o #esquema (o al cambiarla a mano).
-  const fromHash = () => setMode(decodeURIComponent(location.hash.slice(1)));
+  // Al abrir una dirección con #cover o #wire (o al cambiarla a mano). «portada» y
+  // «esquema» eran sus nombres antiguos: los enlaces de antes siguen funcionando.
+  const OLD_NAMES = { portada: 'cover', esquema: 'wire' };
+  const fromHash = () => {
+    const asked = decodeURIComponent(location.hash.slice(1));
+    setMode(OLD_NAMES[asked] ?? asked);
+  };
   window.addEventListener('hashchange', fromHash);
   fromHash();
 }

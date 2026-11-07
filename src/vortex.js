@@ -313,7 +313,7 @@ function createTangle(angle) {
   };
 }
 
-// Las familias. De cada una: su nombre y su color en el modo esquema (paso 7), cuántas
+// Las familias. De cada una: su nombre y su color en el modo wire (paso 7), cuántas
 // fibras tiene, de cuántos puntos está hecha cada una (un filamento del borde no necesita 64: con
 // menos puntos, menos trabajo en cada fotograma), sus quiebros (cuántos puntos de control,
 // cuánto se aparta hacia dentro o fuera y cuánto de lado; el anillo, el que más) y cómo de
@@ -322,8 +322,8 @@ function createTangle(angle) {
 // anillo. Los del borde, casi parejos: tienen que cerrar el círculo.
 export const FAMILIES = [
   { name: 'borde', color: '#ffd166', count: 1400, points: 4, bends: [0, 0, 0], create: createMicro, contrast: 0.6 },
-  { name: 'cerdas', color: '#ef476f', count: 500, points: 24, bends: [3, 0.006, 0.1], create: createHair, contrast: 4 },
-  { name: 'corrientes', color: '#06d6a0', count: 750, points: 64, bends: [5, 0.02, 0.12], create: createStream, contrast: 3 },
+  { name: 'cerdas', color: '#ef476f', count: 425, points: 24, bends: [3, 0.006, 0.1], create: createHair, contrast: 4 },
+  { name: 'corrientes', color: '#06d6a0', count: 638, points: 64, bends: [5, 0.02, 0.12], create: createStream, contrast: 3 },
   { name: 'anillo', color: '#4cc9f0', count: 280, points: 64, bends: [7, 0.05, 0.18], create: createTangle, contrast: 2 },
 ];
 
@@ -366,7 +366,7 @@ function createFibers() {
     // Su mapa de densidad, sorteado de nuevo en cada vórtice: así cada uno tiene sus
     // propias zonas llenas y vacías.
     family.density = createDensity(family.contrast);
-    // Cuántas tiene en este vórtice (las que dice el cajetín del esquema, notes.js).
+    // Cuántas tiene en este vórtice (las que dice el cajetín del modo wire, notes.js).
     family.made = Math.round(family.count * share);
     for (let n = 0; n < family.made; n++) {
       const fiber = family.create(pickAngle(family.density));
@@ -477,7 +477,7 @@ export function createVortex() {
   ribbons.object.renderOrder = 1;
   drops.object.renderOrder = 2;
 
-  // Las guías del modo esquema (paso 7): el agujero, el borde, la corriente y los mapas.
+  // Las guías del modo wire (paso 7): el agujero, el borde, la corriente y los mapas.
   const guides = createGuides();
 
   // Todo junto en un grupo, «spin»: lo que le hagamos al grupo (girarlo) les pasa a todas
@@ -520,7 +520,7 @@ export function createVortex() {
   // estrecha un 2 %.)
   const HOLE_TILT = 0.9;
 
-  // En el esquema, el horizonte dibujado: el borde del agujero.
+  // En el modo wire, el horizonte dibujado: el borde del agujero.
   const horizon = new THREE.LineLoop(
     new THREE.BufferGeometry().setFromPoints(
       Array.from({ length: 128 }, (_, k) => {
@@ -623,12 +623,12 @@ export function createVortex() {
     ribbons.object.material.wireframe = style.wireframe;
     drops.object.material.wireframe = style.wireframe;
     guides.visible = style.guides;
-    // El agujero, del color del fondo (y con su borde dibujado en el esquema).
+    // El agujero, del color del fondo (y con su borde dibujado en el modo wire).
     hole.material.color.set(style.background);
     horizon.visible = style.guides;
   }
 
-  // Los números del remolino, para el cajetín del modo esquema (notes.js).
+  // Los números del remolino, para el cajetín del modo wire (notes.js).
   const info = { fibers: fibers.length, points: totalPoints, spin: SPIN };
 
   // «object» va a la escena; «tilt», a tilt.js, para inclinarlo; «spin» es el sistema del

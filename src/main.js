@@ -6,10 +6,10 @@
 //   vortex.js  → Pasos 2 a 5 · la forma del remolino, las fibras, lo orgánico y el giro
 //   ribbons.js → Paso 6 · las fibras gruesas, como cintas
 //   drops.js   → Paso 6 · las gotas y las puntas redondas
-//   modes.js   → Paso 7 · los modos de visualización (noche, portada, esquema)
-//   guides.js  → Paso 7 · las guías del modo esquema
-//   toner.js   → Paso 7 · el desgaste de fotocopia del modo portada
-//   notes.js   → Paso 7 · el cajetín del modo esquema
+//   modes.js   → Paso 7 · los modos de visualización (noche, cover, wire)
+//   guides.js  → Paso 7 · las guías del modo wire
+//   toner.js   → Paso 7 · el desgaste de fotocopia del modo cover
+//   notes.js   → Paso 7 · el cajetín del modo wire
 //   motion.js  → Paso 8 · muelles, inercia y viento: cada punto se mueve por su cuenta
 //   pointer.js → Paso 9 · el cursor, en el sistema del remolino, para remover las fibras
 //   tilt.js    → Paso 10 · clic y arrastrar (o dos dedos) para inclinar el plano
@@ -36,8 +36,8 @@ fillNotes(document.querySelector('[data-notes]'), vortex.info);
 setupNotesToggle();
 const countFps = createFps();
 
-// Cada vez que cambia el modo: el fondo, el remolino y una clase en <html> (is-portada,
-// is-esquema…) para que style.css cambie el pie y ponga, o no, el desgaste del cartón.
+// Cada vez que cambia el modo: el fondo, el remolino y una clase en <html> (is-cover,
+// is-wire…) para que style.css cambie el pie y ponga, o no, el desgaste del cartón.
 let mode = null;
 setupModes((name, style) => {
   mode = { name, style };
@@ -53,7 +53,7 @@ setupModes((name, style) => {
   root.className = `is-${name}`;
   root.classList.toggle('is-notes-open', notesOpen);
   // La fotocopia se pinta la primera vez que hace falta.
-  if (name === 'portada') applyToner(document.querySelector('.toner'));
+  if (name === 'cover') applyToner(document.querySelector('.toner'));
 });
 
 // El botón de compartir: una foto como se ve ahora, en el modo que esté puesto.
