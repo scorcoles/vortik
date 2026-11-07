@@ -9,7 +9,10 @@
 //   - el SCRATCH: un golpe de ruido que pasa por un filtro que sube y baja de frecuencia
 //     dos o tres veces muy deprisa. Ese vaivén es lo que hace que suene a disco arrastrado
 //     con la mano. Sale solo cada pocos segundos, y también al remover deprisa con el cursor.
-//     A veces, en lugar de scratch, un chasquido de vinilo.
+//     A veces, en lugar de scratch, un chasquido de vinilo;
+//   - los TICS: de vez en cuando, una ráfaga corta de pulsos electrónicos, agudos, secos y a
+//     ritmo regular, como un error digital que se repite; cada ráfaga en un sitio distinto
+//     entre el altavoz izquierdo y el derecho, y a veces acabada en un golpe grave.
 //
 // Los navegadores no dejan sonar nada sin que se toque algo: empieza con el botón del pie.
 
@@ -21,8 +24,18 @@ const BEAT = 1.004;
 const VOLUME = 0.5;
 const FADE = 2;
 
-// Cada cuánto sale un scratch solo: entre y (segundos).
+// Cada cuánto sale un scratch solo: entre y (segundos). Y su volumen, en proporción al de
+// un scratch al remover: los que salen solos, más flojos, de fondo.
 const SCRATCH_EVERY = [6, 16];
+const SCRATCH_AUTO = [0.35, 0.55];
+
+// Cada cuánto sale una ráfaga de tics (segundos), cuántos tics, cada cuánto va uno detrás
+// de otro (segundos), sus frecuencias posibles (Hz) y su volumen.
+const TIC_EVERY = [5, 14];
+const TIC_COUNT = [1, 5];
+const TIC_GAP = [0.06, 0.14];
+const TIC_FREQUENCIES = [2000, 3000, 4500, 8000, 12000];
+const TIC_VOLUME = 0.07;
 
 // Lo deprisa que tiene que ir el cursor para que remover suene (con un gesto rápido), lo menos que pasa entre un scratch del cursor y el siguiente (segundos) y la
 // probabilidad de que suene cuando toca: no siempre, para que no parezca un botón.
@@ -43,6 +56,7 @@ export function createSound() {
   let noise = null;
   let on = false;
   let timer = 0;
+  let ticTimer = 0;
   let lastStir = 0;
 
   // Monta el grave y lo deja sonando (con el volumen general a 0).
@@ -141,12 +155,60 @@ export function createSound() {
     source.stop(now + 0.03);
   }
 
-  // El siguiente sonido suelto, dentro de unos segundos al azar: casi siempre un scratch,
-  // a veces dos o tres chasquidos.
+  // Un tic: un pulso de onda pura de unos milisegundos, que entra y sale de golpe.
+  function tic(at, frequency, pan) {
+    const osc = ctx.createOscillator();
+    osc.frequency.value = frequency;
+    const level = ctx.createGain();
+    level.gain.setValueAtTime(0, at);
+    level.gain.linearRampToValueAtTime(TIC_VOLUME, at + 0.0005);
+    level.gain.exponentialRampToValueAtTime(0.0001, at + 0.006);
+    const side = ctx.createStereoPanner();
+    side.pan.value = pan;
+    osc.connect(level).connect(side).connect(master);
+    osc.start(at);
+    osc.stop(at + 0.01);
+  }
+
+  // El golpe grave con el que acaban algunas ráfagas: una onda de 55 Hz, cortísima.
+  function thump(at) {
+    const osc = ctx.createOscillator();
+    osc.frequency.value = 55;
+    const level = ctx.createGain();
+    level.gain.setValueAtTime(0, at);
+    level.gain.linearRampToValueAtTime(0.3, at + 0.002);
+    level.gain.exponentialRampToValueAtTime(0.0001, at + 0.08);
+    osc.connect(level).connect(master);
+    osc.start(at);
+    osc.stop(at + 0.1);
+  }
+
+  // Una ráfaga de tics: todos a la misma frecuencia, a ritmo regular y en el mismo sitio
+  // entre los dos altavoces.
+  function tics() {
+    const count = Math.round(random(...TIC_COUNT));
+    const gap = random(...TIC_GAP);
+    const frequency = TIC_FREQUENCIES[Math.floor(Math.random() * TIC_FREQUENCIES.length)];
+    const pan = random(-0.7, 0.7);
+    const now = ctx.currentTime + 0.02;
+    for (let k = 0; k < count; k++) tic(now + k * gap, frequency, pan);
+    if (Math.random() < 0.3) thump(now + count * gap);
+  }
+
+  function scheduleTics() {
+    ticTimer = setTimeout(() => {
+      if (!on) return;
+      tics();
+      scheduleTics();
+    }, random(...TIC_EVERY) * 1000);
+  }
+
+  // El siguiente sonido suelto, dentro de unos segundos al azar: casi siempre un scratch
+  // flojito, a veces dos o tres chasquidos.
   function schedule() {
     timer = setTimeout(() => {
       if (!on) return;
-      if (Math.random() < 0.7) scratch(random(0.6, 1));
+      if (Math.random() < 0.7) scratch(random(...SCRATCH_AUTO));
       else for (let k = 0; k < Math.round(random(1, 3)); k++) setTimeout(crackle, random(0, 400));
       schedule();
     }, random(...SCRATCH_EVERY) * 1000);
@@ -161,11 +223,13 @@ export function createSound() {
     master.gain.setValueAtTime(master.gain.value, now);
     master.gain.linearRampToValueAtTime(VOLUME, now + FADE);
     schedule();
+    scheduleTics();
   }
 
   function stop() {
     on = false;
     clearTimeout(timer);
+    clearTimeout(ticTimer);
     const now = ctx.currentTime;
     master.gain.cancelScheduledValues(now);
     master.gain.setValueAtTime(master.gain.value, now);
