@@ -50,16 +50,24 @@ export function widthAt(fiber, t) {
   const s = t * fiber.lumps * TAU + fiber.phase * 2;
   const lumps = 1 + 0.4 * Math.sin(s) + 0.2 * Math.sin(2.3 * s + 1.7);
 
+  let width;
   if (fiber.profile === 'club') {
     // Cerilla: fina en la base y cada vez más gorda hacia la punta libre.
-    return fiber.width * (0.2 + 0.8 * towardTip ** 1.5) * lumps;
+    width = fiber.width * (0.2 + 0.8 * towardTip ** 1.5) * lumps;
+  } else {
+    // Pintura: un líquido nunca acaba en punta. No se afina hacia los extremos; al
+    // contrario, en el último cuarto se condensa y engorda hacia la punta libre, como la
+    // pintura que se acumula antes de caer. Nunca baja del 35 % de su ancho.
+    const condense = 1 + 0.7 * smoothstep(0.75, 1, towardTip);
+    width = fiber.width * Math.max(0.35, lumps) * condense;
   }
 
-  // Pintura: un líquido nunca acaba en punta. No se afina hacia los extremos; al
-  // contrario, en el último cuarto se condensa y engorda hacia la punta libre, como la
-  // pintura que se acumula antes de caer. Nunca baja del 35 % de su ancho.
-  const condense = 1 + 0.7 * smoothstep(0.75, 1, towardTip);
-  return fiber.width * Math.max(0.35, lumps) * condense;
+  // Si acaba en gota, en el último tramo la cinta engorda hasta casi el tamaño de la gota:
+  // así la gota sale de la propia pintura, como una lágrima, y no queda un círculo pegado
+  // a una cinta estrecha (un chupachups).
+  const dropWidth = fiber.drop * 2 * 0.9;
+  if (dropWidth > width) width += (dropWidth - width) * smoothstep(0.78, 1, towardTip);
+  return width;
 }
 
 // La densidad a lo largo: 1 donde la cinta está en su ancho normal o más ancha, y hasta
