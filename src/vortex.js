@@ -11,6 +11,7 @@
 import * as THREE from 'three';
 import { createRibbons, widthAt } from './ribbons.js';
 import { createDrops } from './drops.js';
+import { createGuides } from './guides.js';
 
 // Una vuelta entera, en radianes.
 const TAU = Math.PI * 2;
@@ -19,7 +20,7 @@ const TAU = Math.PI * 2;
 export const RADIUS = 1;
 
 // Radio del agujero negro del centro.
-const HOLE = 0.25;
+export const HOLE = 0.25;
 
 // Lo que se hunde el embudo desde el borde hasta el agujero.
 const DEPTH = 0.6;
@@ -29,13 +30,13 @@ const TWIST = 1.6;
 
 // Espiral logarítmica: cada vez que el radio se reduce a la mitad, la fibra gira el mismo
 // ángulo. Es la espiral de las galaxias, de los caracoles y de un desagüe.
-function spiralAngle(r) {
+export function spiralAngle(r) {
   return TWIST * Math.log(RADIUS / r);
 }
 
 // El embudo: plano en el borde y cada vez más empinado cerca del agujero, como el agua
 // que se va por un desagüe. Vale 0 en el borde y -DEPTH en el agujero.
-function funnelDepth(r) {
+export function funnelDepth(r) {
   const k = (RADIUS / r - 1) / (RADIUS / HOLE - 1);
   return -DEPTH * k;
 }
@@ -43,9 +44,6 @@ function funnelDepth(r) {
 // =========================================================================================
 // Paso 3 · Las fibras: líneas que siguen la corriente
 // =========================================================================================
-
-// De cuántos puntos está hecha cada fibra.
-const POINTS = 64;
 
 // Un número al azar entre a y b.
 function random(a, b) {
@@ -57,7 +55,8 @@ function chance(p) {
   return Math.random() < p;
 }
 
-// Una fibra es un trozo de la corriente. Para dibujarla basta con saber:
+// Una fibra es un trozo de la corriente. Para dibujarla basta con saber (el número de
+// puntos de cada una lo pone su familia, en FAMILIES):
 //   angle       en qué ángulo arranca;
 //   from, to    a qué radio empieza y a qué radio acaba;
 //   turn        cuánto gira de más (o de menos) respecto a la espiral, de punta a punta;
@@ -98,7 +97,7 @@ function fiberPoint(fiber, t, out, i) {
 // =========================================================================================
 //
 // En la portada las fibras no están repartidas por igual: hay sectores llenos y sectores
-// casi vacíos. Y no todas son iguales: hay tres familias.
+// casi vacíos. Y no todas son iguales: hay cuatro familias.
 
 // Un mapa de densidad alrededor del círculo: para cada ángulo, un número entre 0 y 1 que
 // dice cuánto se llena esa zona. Lo hacemos sumando unas pocas ondas que dan 1, 2, 3 y 5
@@ -127,7 +126,31 @@ function pickAngle(density) {
   }
 }
 
-// Familia 1 · Pelitos: cortos, pegados al borde del agujero. Más de la mitad son
+// Familia 1 · Micropelos: diminutos (en la portada, de menos de un milímetro) y
+// muchísimos, justo en el borde del agujero. Uno a uno casi no se ven, pero juntos
+// dibujan el círculo: son los que hacen que el borde del agujero sea tan nítido.
+// (La foto se hizo con un rodillo de pintura girando en un taladro: el agujero es el
+// rodillo, y esto es la pintura justo al despegarse de él.)
+function createMicro(angle) {
+  return {
+    angle,
+    from: HOLE,
+    to: HOLE + random(0.004, 0.018),
+    turn: random(-0.05, 0.05),
+    curl: 0,
+    wobble: 0,
+    waves: 1,
+    phase: 0,
+    brightness: random(0.5, 1),
+    width: 0,
+    profile: 'paint',
+    lumps: 0,
+    drop: chance(0.05) ? random(0.0015, 0.0025) : 0,
+    dropAt: 1,
+  };
+}
+
+// Familia 2 · Pelitos: cortos, pegados al borde del agujero. Más de la mitad son
 // «cerillas»: nacen finos en el borde y engordan hasta una puntita redonda. Cada uno se
 // tuerce a su manera, alguno con un ganchito al final.
 function createHair(angle) {
@@ -155,21 +178,16 @@ function createHair(angle) {
   };
 }
 
-// Familia 2 · Corrientes: largas, bajan en espiral desde fuera hasta el agujero o hasta
+// Familia 3 · Corrientes: largas, bajan en espiral desde fuera hasta el agujero o hasta
 // medio camino. Se ondulan un poco.
 function createStream(angle) {
   const from = HOLE + (RADIUS - HOLE) * random(0.3, 1);
   const to = Math.random() < 0.5 ? HOLE : Math.max(HOLE, from - random(0.1, 0.45));
   // Una de cada tres, cerilla fina: engorda hacia la punta de fuera, que es la libre (la
-  // de dentro se pierde en el agujero). Unas pocas, chorros estrechos. El resto, finas.
-  let width = 0;
-  let profile = 'paint';
-  if (chance(0.35)) {
-    width = random(0.002, 0.005);
-    profile = 'club';
-  } else if (chance(0.05)) {
-    width = random(0.004, 0.009);
-  }
+  // de dentro se pierde en el agujero). El resto, finas. Chorros gruesos, ninguno: la
+  // pintura densa pesa más, sale con más inercia y acaba en el anillo de fuera.
+  const width = chance(0.35) ? random(0.002, 0.005) : 0;
+  const profile = 'club';
   return {
     angle,
     from,
@@ -188,11 +206,10 @@ function createStream(angle) {
   };
 }
 
-// Familia 3 · Maraña: el anillo de fuera. Fibras que dan vueltas casi en círculo, muy
+// Familia 4 · Maraña: el anillo de fuera. Fibras que dan vueltas casi en círculo, muy
 // onduladas, que se cruzan unas con otras. Algunas salen disparadas hacia fuera, como
 // las salpicaduras de la pintura.
 function createTangle(angle) {
-  const from = random(0.72, 1.02);
   const splash = chance(0.1);
 
   // Es aquí donde está la pintura gruesa: alguna lámina ancha (como las de abajo a la
@@ -202,6 +219,10 @@ function createTangle(angle) {
   else if (chance(0.015)) width = random(0.02, 0.035);
   else if (chance(0.12)) width = random(0.003, 0.009);
 
+  // La pintura densa no se mezcla con la zona de dentro: las fibras finas de la maraña
+  // empiezan desde 0,72, pero las cintas, solo en el anillo de fuera, desde 0,84.
+  const from = width ? random(0.84, 1.02) : random(0.72, 1.02);
+
   // Las salpicaduras casi siempre acaban en gota; las demás, a veces. Si la fibra es una
   // cinta, la gota es un poco más gorda que ella; si es fina, una gotita.
   const drop = chance(splash ? 0.8 : 0.3) ? (width ? width * random(0.6, 1) : random(0.003, 0.006)) : 0;
@@ -209,7 +230,8 @@ function createTangle(angle) {
   return {
     angle,
     from,
-    to: splash ? from + random(0.08, 0.3) : from - random(0, 0.12),
+    // Las cintas apenas se acercan al centro: como mucho, 0,05.
+    to: splash ? from + random(0.08, 0.3) : from - random(0, width ? 0.05 : 0.12),
     // Las salpicaduras salen casi rectas; las demás recorren un buen trozo del círculo.
     turn: splash ? random(-0.2, 0.2) : random(0.5, 2.5) * (Math.random() < 0.8 ? -1 : 1),
     wobble: splash ? 0.005 : random(0.008, 0.03),
@@ -227,21 +249,35 @@ function createTangle(angle) {
   };
 }
 
-// Cuántas fibras de cada familia, y cómo de irregular es su reparto. Cada familia tiene
-// su propio mapa: los huecos de los pelitos no coinciden con los de la maraña.
-const FAMILIES = [
-  { count: 700, create: createHair, density: createDensity(3) },
-  { count: 1100, create: createStream, density: createDensity(2) },
-  { count: 350, create: createTangle, density: createDensity(1.5) },
+// Las familias. De cada una: su nombre y su color en el modo esquema (paso 7), cuántas
+// fibras tiene, de cuántos puntos está hecha cada una (un micropelo no necesita 64: con
+// menos puntos, menos trabajo en cada fotograma) y cómo de irregular es su reparto. Cada
+// familia tiene su propio mapa: los huecos de los pelitos no coinciden con los de la
+// maraña. Los micropelos, casi parejos: tienen que cerrar el círculo.
+export const FAMILIES = [
+  { name: 'micropelos', color: '#ffd166', count: 1800, points: 4, create: createMicro, density: createDensity(0.6) },
+  { name: 'pelitos', color: '#ef476f', count: 700, points: 24, create: createHair, density: createDensity(3) },
+  { name: 'corrientes', color: '#06d6a0', count: 1100, points: 64, create: createStream, density: createDensity(2) },
+  { name: 'maraña', color: '#4cc9f0', count: 350, points: 64, create: createTangle, density: createDensity(1.5) },
 ];
 
+// Crea todas las fibras y apunta en cada una de qué familia es, cuántos puntos tiene y
+// dónde empieza («first») en la lista de puntos de todas. Y un número al azar, «rank»,
+// para que los modos que pintan menos líneas (paso 7) sepan cuáles quitar.
 function createFibers() {
   const fibers = [];
-  for (const family of FAMILIES) {
+  let first = 0;
+  FAMILIES.forEach((family, index) => {
     for (let n = 0; n < family.count; n++) {
-      fibers.push(family.create(pickAngle(family.density)));
+      const fiber = family.create(pickAngle(family.density));
+      fiber.family = index;
+      fiber.points = family.points;
+      fiber.first = first;
+      fiber.rank = Math.random();
+      first += family.points;
+      fibers.push(fiber);
     }
-  }
+  });
   return fibers;
 }
 
@@ -251,13 +287,13 @@ function createFibers() {
 //   - las que tienen gota, en su punta libre, la gota (o la tapa, si es más gorda).
 function createCircles(fibers) {
   const circles = [];
-  fibers.forEach((fiber, f) => {
-    const ends = [f * POINTS, f * POINTS + POINTS - 1];
+  fibers.forEach((fiber) => {
+    const ends = [fiber.first, fiber.first + fiber.points - 1];
     [0, 1].forEach((end) => {
       const cap = fiber.width > 0 ? widthAt(fiber, end) / 2 : 0;
       const drop = fiber.dropAt === end ? fiber.drop : 0;
       const radius = Math.max(cap, drop);
-      if (radius > 0) circles.push({ point: ends[end], radius, brightness: fiber.brightness });
+      if (radius > 0) circles.push({ fiber, point: ends[end], radius });
     });
   });
   return circles;
@@ -269,50 +305,53 @@ function createCircles(fibers) {
 
 export function createVortex() {
   const fibers = createFibers();
+  const last = fibers[fibers.length - 1];
+  const totalPoints = last.first + last.points;
 
   // La línea central de todas las fibras, en una sola lista enorme (x, y, z seguidos).
   // Las tres capas (líneas, cintas y gotas) se construyen a partir de ella: cuando el
-  // cursor la mueva (paso 7), todas la seguirán.
-  const centers = new Float32Array(fibers.length * POINTS * 3);
-  const colors = new Float32Array(fibers.length * POINTS * 3);
+  // cursor la mueva (paso 8), todas la seguirán.
+  const centers = new Float32Array(totalPoints * 3);
+  const colors = new Float32Array(totalPoints * 3);
+
+  for (const fiber of fibers) {
+    for (let p = 0; p < fiber.points; p++) {
+      fiberPoint(fiber, p / (fiber.points - 1), centers, (fiber.first + p) * 3);
+    }
+  }
 
   // Capa 1 · Las fibras finas, como líneas. Una lista de parejas de puntos que se unen
   // con una línea: (0,1), (1,2), (2,3)… dentro de cada fibra, sin unir el último punto de
   // una con el primero de la siguiente. Las fibras gruesas no se unen: esas son cintas.
-  const segments = [];
-
-  fibers.forEach((fiber, f) => {
-    const first = f * POINTS;
-    for (let p = 0; p < POINTS; p++) {
-      const i = (first + p) * 3;
-      fiberPoint(fiber, p / (POINTS - 1), centers, i);
-      colors[i] = colors[i + 1] = colors[i + 2] = fiber.brightness;
-      if (fiber.width === 0 && p < POINTS - 1) segments.push(first + p, first + p + 1);
+  // «share» es la parte de las finas que se pinta: 1 = todas; 0,5 = la mitad (paso 7).
+  function lineSegments(share) {
+    const segments = [];
+    for (const fiber of fibers) {
+      if (fiber.width > 0 || fiber.rank > share) continue;
+      for (let p = 0; p < fiber.points - 1; p++) segments.push(fiber.first + p, fiber.first + p + 1);
     }
-  });
+    return segments;
+  }
 
   // Para la tarjeta gráfica, todas las fibras finas son un solo objeto. Un solo objeto se
   // pinta de una vez, y eso es mucho más rápido que miles de objetos sueltos.
   const geometry = new THREE.BufferGeometry();
   geometry.setAttribute('position', new THREE.BufferAttribute(centers, 3));
-  geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-  geometry.setIndex(segments);
+  const colorAttribute = new THREE.BufferAttribute(colors, 3);
+  geometry.setAttribute('color', colorAttribute);
+  geometry.setIndex(lineSegments(1));
 
-  // Líneas semitransparentes que se SUMAN al cruzarse («additive»): donde se juntan
-  // muchas fibras, como en el borde del agujero, la luz se acumula y brilla más. Es lo
-  // que pasa en la portada.
+  // Líneas semitransparentes. Cómo se mezclan al cruzarse lo decide cada modo (paso 7).
   const material = new THREE.LineBasicMaterial({
     vertexColors: true,
     transparent: true,
-    opacity: 0.4,
-    blending: THREE.AdditiveBlending,
     depthWrite: false,
   });
 
   const lines = new THREE.LineSegments(geometry, material);
 
-  // Capas 2 y 3 · Las cintas y las gotas (paso 6).
-  const ribbons = createRibbons(fibers, centers, POINTS);
+  // Capas 2 y 3 · Las cintas y los círculos de las puntas (paso 6).
+  const ribbons = createRibbons(fibers, centers);
   const drops = createDrops(centers, createCircles(fibers));
 
   // Se pintan en este orden: primero las líneas, encima la pintura gruesa y encima las gotas.
@@ -320,10 +359,13 @@ export function createVortex() {
   ribbons.object.renderOrder = 1;
   drops.object.renderOrder = 2;
 
-  // Las tres capas, juntas en un grupo: lo que le hagamos al grupo (girarlo, inclinarlo)
-  // les pasa a las tres.
+  // Las guías del modo esquema (paso 7): el agujero, el borde, la corriente y los mapas.
+  const guides = createGuides();
+
+  // Todo junto en un grupo: lo que le hagamos al grupo (girarlo, inclinarlo) les pasa a
+  // todas las capas.
   const object = new THREE.Group();
-  object.add(lines, ribbons.object, drops.object);
+  object.add(lines, ribbons.object, drops.object, guides);
 
   // =======================================================================================
   // Paso 5 · Todo gira
@@ -337,5 +379,47 @@ export function createVortex() {
     object.rotation.z += SPIN * dt;
   }
 
-  return { object, update };
+  // =======================================================================================
+  // Paso 7 · Modos de visualización: el mismo remolino, pintado de otra manera
+  // =======================================================================================
+  //
+  // Un modo (modes.js) es una lista de ajustes. Aquí los aplicamos: los colores de las
+  // fibras, cómo se mezclan las líneas, cuántas se pintan, si las cintas van en alambre y
+  // si se ven las guías.
+
+  const paint = new THREE.Color();
+  const color = new THREE.Color();
+
+  function setStyle(style) {
+    // El color de cada fibra: en «tone», el color de la pintura del modo, más claro o más
+    // oscuro según lo blanca que sea la fibra; en «family», el color de su familia.
+    paint.set(style.paint);
+    const colorOf =
+      style.palette === 'family'
+        ? (fiber) => color.set(FAMILIES[fiber.family].color)
+        : (fiber) => color.copy(paint).multiplyScalar(fiber.brightness);
+
+    for (const fiber of fibers) {
+      colorOf(fiber);
+      for (let p = 0; p < fiber.points; p++) color.toArray(colors, (fiber.first + p) * 3);
+    }
+    colorAttribute.needsUpdate = true;
+    ribbons.recolor(colorOf);
+    drops.recolor(colorOf);
+
+    // Las líneas: con «add» se SUMAN al cruzarse, y donde se juntan muchas la luz se
+    // acumula y brilla (y, si son demasiadas, se quema); con «normal», la de encima tapa a
+    // la de debajo, y nunca pasa del color de la pintura.
+    material.opacity = style.lineOpacity;
+    material.blending = style.lineBlending === 'add' ? THREE.AdditiveBlending : THREE.NormalBlending;
+    // Cambiar la mezcla obliga a la GPU a preparar el material otra vez.
+    material.needsUpdate = true;
+    geometry.setIndex(lineSegments(style.lineShare));
+
+    ribbons.object.material.wireframe = style.wireframe;
+    drops.object.material.wireframe = style.wireframe;
+    guides.visible = style.guides;
+  }
+
+  return { object, update, setStyle };
 }

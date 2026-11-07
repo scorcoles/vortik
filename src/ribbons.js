@@ -46,46 +46,41 @@ export function widthAt(fiber, t) {
   return fiber.width * Math.max(0.35, lumps) * condense;
 }
 
-// «centers» es la lista con la línea central de todas las fibras (x, y, z seguidos,
-// «points» puntos por fibra). Las cintas se construyen encima de ella.
-export function createRibbons(fibers, centers, points) {
-  // Solo las fibras con grosor, y dónde empieza cada una en «centers».
+// «centers» es la lista con la línea central de todas las fibras (x, y, z seguidos). Cada
+// fibra sabe dónde empieza en ella («first») y cuántos puntos tiene («points»). Las cintas
+// se construyen encima.
+export function createRibbons(fibers, centers) {
+  // Solo las fibras con grosor, y en qué vértice empieza la cinta de cada una (dos
+  // vértices por punto: el lado a y el lado b).
   const thick = [];
-  fibers.forEach((fiber, f) => {
-    if (fiber.width > 0) thick.push({ fiber, first: f * points });
-  });
+  let vertices = 0;
+  for (const fiber of fibers) {
+    if (fiber.width === 0) continue;
+    thick.push({ fiber, v: vertices });
+    vertices += fiber.points * 2;
+  }
 
-  // Dos vértices por punto (el lado a y el lado b).
-  const positions = new Float32Array(thick.length * points * 2 * 3);
-  const colors = new Float32Array(thick.length * points * 2 * 3);
-  // Dos triángulos (seis vértices) por cada tramo entre dos puntos.
-  const triangles = new Uint32Array(thick.length * (points - 1) * 6);
+  const positions = new Float32Array(vertices * 3);
+  const colors = new Float32Array(vertices * 3);
 
-  let n = 0;
-  thick.forEach(({ fiber }, k) => {
-    const v = k * points * 2; // primer vértice de esta cinta
-    for (let p = 0; p < points; p++) {
-      // Color: el mismo en los dos lados.
-      for (let side = 0; side < 2; side++) {
-        const c = (v + p * 2 + side) * 3;
-        colors[c] = colors[c + 1] = colors[c + 2] = fiber.brightness;
-      }
-      if (p < points - 1) {
-        const a0 = v + p * 2;
-        const b0 = a0 + 1;
-        const a1 = a0 + 2;
-        const b1 = a0 + 3;
-        triangles.set([a0, b0, a1, b0, b1, a1], n);
-        n += 6;
-      }
+  // Dos triángulos por cada tramo entre dos puntos.
+  const triangles = [];
+  for (const { fiber, v } of thick) {
+    for (let p = 0; p < fiber.points - 1; p++) {
+      const a0 = v + p * 2;
+      const b0 = a0 + 1;
+      const a1 = a0 + 2;
+      const b1 = a0 + 3;
+      triangles.push(a0, b0, a1, b0, b1, a1);
     }
-  });
+  }
 
   const geometry = new THREE.BufferGeometry();
   const positionAttribute = new THREE.BufferAttribute(positions, 3);
+  const colorAttribute = new THREE.BufferAttribute(colors, 3);
   geometry.setAttribute('position', positionAttribute);
-  geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-  geometry.setIndex(new THREE.BufferAttribute(triangles, 1));
+  geometry.setAttribute('color', colorAttribute);
+  geometry.setIndex(triangles);
 
   // La pintura gruesa es opaca: tapa lo que tiene detrás (no se suma como las líneas).
   // Opaca también para que no se note dónde la cinta se monta sobre la tapa de su punta.
@@ -98,10 +93,10 @@ export function createRibbons(fibers, centers, points) {
   const object = new THREE.Mesh(geometry, material);
 
   // Recalcula los vértices de todas las cintas a partir de las líneas centrales. Ahora se
-  // llama una vez; cuando el cursor mueva las fibras (paso 7), en cada fotograma.
+  // llama una vez; cuando el cursor mueva las fibras (paso 8), en cada fotograma.
   function update() {
-    thick.forEach(({ fiber, first }, k) => {
-      const v = k * points * 2;
+    for (const { fiber, v } of thick) {
+      const { first, points } = fiber;
       for (let p = 0; p < points; p++) {
         // Hacia dónde va la fibra en este punto: del punto anterior al siguiente (en las
         // puntas, el propio punto hace de anterior o de siguiente).
@@ -127,11 +122,20 @@ export function createRibbons(fibers, centers, points) {
         positions[b + 1] = centers[c + 1] - ny;
         positions[b + 2] = centers[c + 2];
       }
-    });
+    }
     // Avisamos a Three.js de que la lista ha cambiado y tiene que volver a subirla a la GPU.
     positionAttribute.needsUpdate = true;
   }
 
+  // Pinta cada cinta del color que diga «colorOf(fiber)» (lo elige el modo, paso 7).
+  function recolor(colorOf) {
+    for (const { fiber, v } of thick) {
+      const color = colorOf(fiber);
+      for (let k = 0; k < fiber.points * 2; k++) color.toArray(colors, (v + k) * 3);
+    }
+    colorAttribute.needsUpdate = true;
+  }
+
   update();
-  return { object, update };
+  return { object, update, recolor };
 }
