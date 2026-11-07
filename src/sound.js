@@ -11,8 +11,8 @@
 //     con la mano. Sale solo cada pocos segundos, y también al remover deprisa con el cursor.
 //     A veces, en lugar de scratch, un chasquido de vinilo;
 //   - el LATIDO (heartbeat.js): con cada golpe, un golpe grave que cae de tono, como un
-//     bombo muy blando. Justo antes, todo lo demás se apaga en medio segundo, y el
-//     golpe llega sobre el silencio; después del latido, vuelve poco a poco;
+//     bombo muy blando. Justo antes, todo lo demás baja en un momento a un 30 %, y
+//     el golpe llega por encima; después del latido, vuelve poco a poco;
 //   - la INCLINACIÓN (tilt.js) cambia el grave: inclinar arriba o abajo sube o baja su
 //     tono (hasta 4 semitonos), e inclinar a izquierda o derecha lo hace más brillante o
 //     más apagado (el filtro, hasta una octava);
@@ -43,10 +43,11 @@ const SQUEEZE_PITCH = 600;
 const VOLUME = 0.5;
 const FADE = 2;
 
-// El latido: su volumen; antes de él, lo que tarda en apagarse todo lo demás (segundos);
-// y lo que tarda en volver después.
+// El latido: su volumen; antes de él, lo que tarda en bajar todo lo demás (segundos) y
+// hasta dónde (0,3 = un 30 %); y lo que tarda en volver después.
 const HEARTBEAT_VOLUME = 1.4;
-const HUSH_FADE = 0.5;
+const HUSH_FADE = 0.6;
+const HUSH_LEVEL = 0.3;
 const HUSH_RETURN = 2;
 
 // Cada cuánto sale un scratch solo: entre y (segundos). Y su volumen, en proporción al de
@@ -297,14 +298,14 @@ export function createSound() {
     }
   }
 
-  // El latido viene dentro de «seconds» segundos: todo lo demás se apaga en HUSH_FADE
-  // segundos (y, si falta más, se queda en silencio hasta el golpe). Mientras, no sale ningún sonido suelto.
+  // El latido viene dentro de «seconds» segundos: todo lo demás baja a HUSH_LEVEL en
+  // HUSH_FADE segundos y se queda así hasta el golpe. Mientras, no sale ningún sonido suelto.
   function hush(seconds) {
     if (!on) return;
     const now = ctx.currentTime;
     bed.gain.cancelScheduledValues(now);
     bed.gain.setValueAtTime(bed.gain.value, now);
-    bed.gain.linearRampToValueAtTime(0, now + Math.min(HUSH_FADE, seconds));
+    bed.gain.linearRampToValueAtTime(HUSH_LEVEL, now + Math.min(HUSH_FADE, seconds));
     busyUntil = Math.max(busyUntil, now + seconds + 0.6);
   }
 
