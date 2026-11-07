@@ -1,0 +1,68 @@
+/* La página entera es el escenario: negra, sin márgenes y sin scroll. */
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: #000;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+/* El canvas ocupa toda la ventana. «touch-action: none» evita que, en el móvil, remover
+   las fibras con el dedo haga scroll o zoom en la página. */
+canvas {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  touch-action: none;
+}
+
+/* Pie con instrucciones y créditos, en letra pequeña de máquina de escribir (como en
+   vertikis), en blanco sobre el negro. */
+.credit {
+  position: fixed;
+  left: 8px;
+  bottom: 8px;
+  z-index: 1;
+  margin: 0;
+  font: 9px/1.5 ui-monospace, Menlo, Consolas, monospace;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #fff;
+  /* El pie deja pasar el ratón y el dedo al canvas, salvo en sus enlaces. */
+  pointer-events: none;
+}
+
+.credit a {
+  color: inherit;
+  pointer-events: auto;
+}
+
+/* Los «·» que separan las frases, con aire fijo a cada lado. */
+.credit__sep {
+  margin: 0 0.6em;
+}
+
+.credit__tag {
+  display: inline-block;
+  padding: 2px 5px;
+  background: #fff;
+  color: #000;
+  margin-right: 4px;
+}
+
+/* En escritorio, el pie un punto más grande. */
+@media (min-width: 64rem) and (pointer: fine) {
+  .credit {
+    font-size: 10px;
+  }
+}
+
+/* En el móvil, el mismo margen a izquierda y derecha: el texto no llega al borde. */
+@media (max-width: 63.99rem), (pointer: coarse) {
+  .credit {
+    right: 8px;
+  }
+}

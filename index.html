@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>vortik</title>
+    <meta name="description" content="Vortik: un remolino de fibras que gira y se deja remover con el ratón o el dedo. Un experimento de VERTIK." />
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <!-- El escenario: Three.js dibuja aquí todo lo que se mueve. -->
+    <canvas data-vortik aria-label="Vortik: un remolino de fibras blancas sobre negro que se puede remover" role="img"></canvas>
+
+    <!-- Pie con las instrucciones y los créditos. -->
+    <p class="credit">
+      <span class="credit__tag">vortik</span>
+      Mueve el ratón o el dedo para remover las fibras<span class="credit__sep">·</span><wbr />Homenaje a Dysnomia — Dawn of Midi, 2013<span class="credit__sep">·</span><wbr />Un experimento de <a href="https://www.vertik.net">VERTIK</a>
+    </p>
+
+    <!-- Un módulo: Vite sigue sus «import» y sirve Three.js desde node_modules. -->
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
