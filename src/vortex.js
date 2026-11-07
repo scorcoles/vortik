@@ -321,10 +321,13 @@ export const FAMILIES = [
 // fotograma (con todas, en un móvil iba a trompicones).
 const PHONE_SHARE = 0.55;
 
+// Y en escritorio, un 15 % menos de las que dice FAMILIES: menos denso, más aireado.
+const DESKTOP_SHARE = 0.85;
+
 function createFibers() {
   const fibers = [];
   let first = 0;
-  const share = isPhone() ? PHONE_SHARE : 1;
+  const share = isPhone() ? PHONE_SHARE : DESKTOP_SHARE;
   FAMILIES.forEach((family, index) => {
     // Su mapa de densidad, sorteado de nuevo en cada vórtice: así cada uno tiene sus
     // propias zonas llenas y vacías.
