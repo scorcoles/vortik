@@ -21,7 +21,7 @@
 // La rigidez del muelle: fuerte en la raíz de la fibra (la que está agarrada) y floja en
 // la punta libre, que así se balancea más y tarda más en pararse.
 const STIFF_ROOT = 40;
-const STIFF_TIP = 5;
+const STIFF_TIP = 10;
 
 // La amortiguación: 0 = oscila para siempre; 1 = vuelve sin pasarse. Con poco, las puntas
 // se mecen un par de veces antes de parar.
@@ -38,9 +38,13 @@ const WIND = 0.05;
 //   STIR         con cuánta fuerza lleva los puntos a su velocidad;
 //   SWIRL        un pequeño remolino alrededor del cursor, que hace que la estela se rice
 //                en vez de moverse en bloque.
-const STIR_RADIUS = 0.16;
-const STIR = 9;
-const SWIRL = 6;
+const STIR_RADIUS = 0.12;
+const STIR = 3;
+const SWIRL = 2;
+
+// Lo más que un punto puede apartarse de su sitio. Es lo que hace que el movimiento sea
+// sutil: por fuerte que se mueva el ratón, la fibra se dobla un poco, no se deforma.
+const MAX_OFFSET = 0.04;
 
 // El viento en el punto (x, y) en el instante t: unas pocas ondas que viajan en distintas
 // direcciones y a distintas velocidades. Suave en el espacio (los puntos vecinos reciben
@@ -81,6 +85,7 @@ export function createMotion(fibers, centers) {
   const wind = [0, 0];
 
   const stirRadius2 = STIR_RADIUS * STIR_RADIUS;
+  const maxOffset2 = MAX_OFFSET * MAX_OFFSET;
 
   // Un paso de dt segundos. «alpha» es la aceleración del giro (radianes por segundo, cada
   // segundo), «time», el reloj, para el viento, y «cursor», lo que dice pointer.js.
@@ -140,6 +145,18 @@ export function createMotion(fibers, centers) {
       velocity[i2 + 1] += ay * dt;
       offset[i2] += velocity[i2] * dt;
       offset[i2 + 1] += velocity[i2 + 1] * dt;
+
+      // El tope: si se ha pasado de MAX_OFFSET, lo devolvemos al borde, en la misma
+      // dirección, y le quitamos la velocidad que lo alejaba (para que no se quede pegado
+      // al tope empujando).
+      const off2 = offset[i2] * offset[i2] + offset[i2 + 1] * offset[i2 + 1];
+      if (off2 > maxOffset2) {
+        const k = MAX_OFFSET / Math.sqrt(off2);
+        offset[i2] *= k;
+        offset[i2 + 1] *= k;
+        velocity[i2] *= 0.5;
+        velocity[i2 + 1] *= 0.5;
+      }
 
       centers[i3] = rest[i3] + offset[i2];
       centers[i3 + 1] = rest[i3 + 1] + offset[i2 + 1];
