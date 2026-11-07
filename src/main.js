@@ -85,13 +85,14 @@ canvas.addEventListener('pointerdown', (e) => {
   }
 });
 
-// El sonido, con el botón del pie: apagado hasta que se pulsa.
+// El sonido, con el altavoz de arriba a la derecha: apagado hasta que se pulsa.
 const sound = createSound();
 const soundButton = document.querySelector('[data-sound]');
 soundButton?.addEventListener('click', () => {
   const playing = sound.toggle();
-  soundButton.textContent = playing ? '♪ Sin sonido' : '♪ Sonido';
+  soundButton.classList.toggle('is-on', playing);
   soundButton.setAttribute('aria-pressed', String(playing));
+  soundButton.setAttribute('aria-label', playing ? 'Apagar el sonido' : 'Encender el sonido');
 });
 
 // El ratón o el dedo: para remover (paso 9) y para inclinar (paso 10).

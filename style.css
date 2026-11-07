@@ -65,8 +65,7 @@ canvas.is-tilting {
   white-space: nowrap;
 }
 
-.credit__modes button,
-.credit__sound {
+.credit__modes button {
   /* Más zona para el dedo que lo que se ve. */
   margin: -8px 0;
   padding: 8px 0;
@@ -80,14 +79,12 @@ canvas.is-tilting {
   pointer-events: auto;
 }
 
-.credit__modes button:hover,
-.credit__sound:hover {
+.credit__modes button:hover {
   text-decoration: underline;
   text-underline-offset: 2px;
 }
 
-.credit__modes button:focus-visible,
-.credit__sound:focus-visible {
+.credit__modes button:focus-visible {
   outline: 1px solid currentColor;
   outline-offset: 1px;
 }
@@ -176,13 +173,20 @@ canvas.is-tilting {
   background: var(--c);
 }
 
-/* Compartir: arriba a la derecha, como en vertikis (el icono, de 20px con 4px de relleno),
-   a media luz hasta que pasas por encima. Del color del pie de cada modo. */
-.share {
+/* Arriba a la derecha, juntos: el sonido y compartir, como en vertikis (cada icono, de
+   20px con 4px de relleno), a media luz hasta que pasas por encima. Del color del pie de
+   cada modo. Van en fila: si compartir no aparece, el sonido ocupa su sitio. */
+.tools {
   position: fixed;
   top: 12px;
   right: 12px;
   z-index: 2;
+  display: flex;
+  gap: 6px;
+}
+
+.sound,
+.share {
   display: block;
   margin: 0;
   padding: 4px;
@@ -199,31 +203,48 @@ canvas.is-tilting {
   display: none;
 }
 
+.sound:hover,
+.sound:focus-visible,
 .share:hover,
 .share:focus-visible {
   opacity: 1;
 }
 
+/* El sonido: con ondas si suena, con una equis si no. */
+.sound__on,
+.sound.is-on .sound__off {
+  display: none;
+}
+
+.sound.is-on .sound__on {
+  display: inline;
+}
+
+.sound:focus-visible,
 .share:focus-visible {
   outline: 2px solid currentColor;
   outline-offset: 2px;
 }
 
+.sound svg,
 .share svg {
   width: 20px;
   height: 20px;
 }
 
+.is-portada .sound,
 .is-portada .share {
   color: #e6e2d6;
 }
 
+.is-esquema .sound,
 .is-esquema .share {
   color: #c9d1d9;
 }
 
 /* En el móvil, un poco más grande, para el dedo. */
 @media (max-width: 47.99rem) {
+  .sound svg,
   .share svg {
     width: 24px;
     height: 24px;

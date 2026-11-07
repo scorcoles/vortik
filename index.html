@@ -20,21 +20,31 @@
     <!-- El cajetín del modo esquema: qué es y con qué números funciona (src/notes.js). -->
     <div class="notes" data-notes aria-hidden="true"></div>
 
-    <!-- Compartir una foto de cómo está ahora el remolino (src/share.js). Si el navegador
-         no sabe compartir imágenes, no aparece. -->
-    <button type="button" class="share" data-share hidden aria-label="Compartir una imagen del remolino">
-      <svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
-        <path d="M8.6 10.5 15.4 6.5M8.6 13.5l6.8 4" fill="none" />
-        <circle cx="18" cy="5" r="3" stroke="none" />
-        <circle cx="6" cy="12" r="3" stroke="none" />
-        <circle cx="18" cy="19" r="3" stroke="none" />
-      </svg>
-    </button>
+    <!-- Arriba a la derecha: el sonido (src/sound.js), apagado de entrada, y compartir una
+         foto de cómo está ahora el remolino (src/share.js; si el navegador no sabe
+         compartir imágenes, no aparece). -->
+    <div class="tools">
+      <button type="button" class="sound" data-sound aria-pressed="false" aria-label="Encender el sonido">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M3.5 9.5h3.5l5-4v13l-5-4H3.5z" fill="currentColor" stroke="none" />
+          <path class="sound__on" d="M15.5 9.5a3.5 3.5 0 0 1 0 5M18 7a7 7 0 0 1 0 10" />
+          <path class="sound__off" d="M16 9.5l5 5M21 9.5l-5 5" />
+        </svg>
+      </button>
+      <button type="button" class="share" data-share hidden aria-label="Compartir una imagen del remolino">
+        <svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+          <path d="M8.6 10.5 15.4 6.5M8.6 13.5l6.8 4" fill="none" />
+          <circle cx="18" cy="5" r="3" stroke="none" />
+          <circle cx="6" cy="12" r="3" stroke="none" />
+          <circle cx="18" cy="19" r="3" stroke="none" />
+        </svg>
+      </button>
+    </div>
 
     <!-- Pie con las instrucciones y los créditos. -->
     <p class="credit">
       <span class="credit__tag">vortik</span>
-      Mueve el ratón o el dedo para remover las fibras<span class="credit__sep">·</span><wbr />Arrastra (o usa dos dedos) para inclinarlas<span class="credit__sep">·</span><wbr />Doble clic (o doble toque) para uno nuevo<span class="credit__sep">·</span><wbr />Homenaje a <a href="https://www.youtube.com/watch?v=BiVRDuIUKfA&amp;list=OLAK5uy_l8Qxdj6Uvs5vhsUzVTHRmUoHcGrPncBwA" target="_blank" rel="noopener">Dysnomia — Dawn of Midi, 2013</a><span class="credit__sep">·</span><wbr /><button type="button" class="credit__sound" data-sound aria-pressed="false">♪ Sonido</button><span class="credit__sep">·</span><wbr /><span class="credit__modes"><button type="button" data-mode-prev aria-label="Visualización anterior">← Prev</button><span class="credit__sep">·</span><button type="button" class="credit__info" data-notes-toggle aria-expanded="false">Info</button><button type="button" data-mode-next aria-label="Visualización siguiente">Next →</button></span>
+      Mueve el ratón o el dedo para remover las fibras<span class="credit__sep">·</span><wbr />Arrastra (o usa dos dedos) para inclinarlas<span class="credit__sep">·</span><wbr />Doble clic (o doble toque) para uno nuevo<span class="credit__sep">·</span><wbr />Homenaje a <a href="https://www.youtube.com/watch?v=BiVRDuIUKfA&amp;list=OLAK5uy_l8Qxdj6Uvs5vhsUzVTHRmUoHcGrPncBwA" target="_blank" rel="noopener">Dysnomia — Dawn of Midi, 2013</a><span class="credit__sep">·</span><wbr /><span class="credit__modes"><button type="button" data-mode-prev aria-label="Visualización anterior">← Prev</button><span class="credit__sep">·</span><button type="button" class="credit__info" data-notes-toggle aria-expanded="false">Info</button><button type="button" data-mode-next aria-label="Visualización siguiente">Next →</button></span>
     </p>
 
     <!-- Un módulo: Vite sigue sus «import» y sirve Three.js desde node_modules. -->
