@@ -11,8 +11,8 @@
 //     con la mano. Sale solo cada pocos segundos, y también al remover deprisa con el cursor.
 //     A veces, en lugar de scratch, un chasquido de vinilo;
 //   - el LATIDO (heartbeat.js): con cada golpe, un golpe grave que cae de tono, como un
-//     bombo muy blando. Antes, todo lo demás se apaga en medio segundo y 0,9 segundos de
-//     silencio absoluto; después del latido, vuelve poco a poco;
+//     bombo muy blando. Justo antes, todo lo demás se apaga en medio segundo, y el
+//     golpe llega sobre el silencio; después del latido, vuelve poco a poco;
 //   - la INCLINACIÓN (tilt.js) cambia el grave: inclinar arriba o abajo sube o baja su
 //     tono (hasta 4 semitonos), e inclinar a izquierda o derecha lo hace más brillante o
 //     más apagado (el filtro, hasta una octava);
@@ -43,8 +43,8 @@ const SQUEEZE_PITCH = 600;
 const VOLUME = 0.5;
 const FADE = 2;
 
-// El latido: su volumen; antes de él, lo que tarda en apagarse todo lo demás (segundos)
-// (el resto, hasta el golpe, es silencio); y lo que tarda en volver después.
+// El latido: su volumen; antes de él, lo que tarda en apagarse todo lo demás (segundos);
+// y lo que tarda en volver después.
 const HEARTBEAT_VOLUME = 1.4;
 const HUSH_FADE = 0.5;
 const HUSH_RETURN = 2;
@@ -298,7 +298,7 @@ export function createSound() {
   }
 
   // El latido viene dentro de «seconds» segundos: todo lo demás se apaga en HUSH_FADE
-  // segundos y se queda en silencio hasta el golpe. Mientras, no sale ningún sonido suelto.
+  // segundos (y, si falta más, se queda en silencio hasta el golpe). Mientras, no sale ningún sonido suelto.
   function hush(seconds) {
     if (!on) return;
     const now = ctx.currentTime;
