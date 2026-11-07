@@ -14,6 +14,7 @@
 //   pointer.js → Paso 9 · el cursor, en el sistema del remolino, para remover las fibras
 //   tilt.js    → Paso 10 · clic y arrastrar (o dos dedos) para inclinar el plano
 //   share.js   → compartir una foto del momento
+//   sound.js   → el sonido: un grave continuo y algún scratch
 
 import { createStage } from './stage.js';
 import { createVortex, RADIUS } from './vortex.js';
@@ -24,6 +25,7 @@ import { createPointer } from './pointer.js';
 import { createTilt } from './tilt.js';
 import { setupShare } from './share.js';
 import { isPhone } from './device.js';
+import { createSound } from './sound.js';
 
 const canvas = document.querySelector('[data-vortik]');
 const stage = createStage(canvas, { radius: RADIUS });
@@ -83,6 +85,15 @@ canvas.addEventListener('pointerdown', (e) => {
   }
 });
 
+// El sonido, con el botón del pie: apagado hasta que se pulsa.
+const sound = createSound();
+const soundButton = document.querySelector('[data-sound]');
+soundButton?.addEventListener('click', () => {
+  const playing = sound.toggle();
+  soundButton.textContent = playing ? '♪ Sin sonido' : '♪ Sonido';
+  soundButton.setAttribute('aria-pressed', String(playing));
+});
+
 // El ratón o el dedo: para remover (paso 9) y para inclinar (paso 10).
 const pointer = createPointer(canvas, stage.camera);
 const tilt = createTilt(canvas);
@@ -95,4 +106,5 @@ stage.start((dt) => {
   const cursor = pointer.update(dt, vortex.spin);
   if (tilt.isDragging()) cursor.active = false;
   vortex.update(dt, cursor);
+  sound.update(cursor);
 });

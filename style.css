@@ -65,7 +65,8 @@ canvas.is-tilting {
   white-space: nowrap;
 }
 
-.credit__modes button {
+.credit__modes button,
+.credit__sound {
   /* Más zona para el dedo que lo que se ve. */
   margin: -8px 0;
   padding: 8px 0;
@@ -79,12 +80,14 @@ canvas.is-tilting {
   pointer-events: auto;
 }
 
-.credit__modes button:hover {
+.credit__modes button:hover,
+.credit__sound:hover {
   text-decoration: underline;
   text-underline-offset: 2px;
 }
 
-.credit__modes button:focus-visible {
+.credit__modes button:focus-visible,
+.credit__sound:focus-visible {
   outline: 1px solid currentColor;
   outline-offset: 1px;
 }
