@@ -34,8 +34,10 @@ const SCRATCH_AUTO = [0.4, 0.63];
 const TIC_EVERY = [5, 14];
 const TIC_COUNT = [1, 5];
 const TIC_GAP = [0.06, 0.14];
-const TIC_FREQUENCIES = [2000, 3000, 4500, 8000, 12000];
-const TIC_VOLUME = 0.07;
+// (Nada por encima de 6 kHz: los altavoces de un móvil o un portátil casi no lo dan.)
+const TIC_FREQUENCIES = [1200, 2000, 3000, 4500, 6000];
+const TIC_VOLUME = 0.2;
+const TIC_LENGTH = 0.012;
 
 // Lo deprisa que tiene que ir el cursor para que remover suene (con un gesto rápido), lo menos que pasa entre un scratch del cursor y el siguiente (segundos) y la
 // probabilidad de que suene cuando toca: no siempre, para que no parezca un botón.
@@ -57,6 +59,9 @@ export function createSound() {
   let on = false;
   let timer = 0;
   let ticTimer = 0;
+  // Hasta cuándo está sonando un scratch o una ráfaga de tics (en el reloj del audio): los
+  // sonidos sueltos no se pisan, el siguiente espera a que acabe el anterior.
+  let busyUntil = 0;
   let lastStir = 0;
 
   // Monta el grave y lo deja sonando (con el volumen general a 0).
@@ -104,9 +109,10 @@ export function createSound() {
     for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
   }
 
-  // Un scratch: ruido por un filtro que barre arriba y abajo dos o tres veces.
+  // Un scratch: ruido por un filtro que barre arriba y abajo dos o tres veces. Si está
+  // sonando otro sonido suelto, empieza cuando acabe.
   function scratch(strength = 1) {
-    const now = ctx.currentTime;
+    const now = Math.max(ctx.currentTime, busyUntil);
     const source = ctx.createBufferSource();
     source.buffer = noise;
     source.loop = true;
@@ -137,6 +143,7 @@ export function createSound() {
     source.connect(band).connect(level).connect(master);
     source.start(now, random(0, 0.9));
     source.stop(t + 0.05);
+    busyUntil = t + 0.25;
   }
 
   // Un chasquido de vinilo: un golpe de ruido cortísimo y agudo.
@@ -162,12 +169,12 @@ export function createSound() {
     const level = ctx.createGain();
     level.gain.setValueAtTime(0, at);
     level.gain.linearRampToValueAtTime(TIC_VOLUME, at + 0.0005);
-    level.gain.exponentialRampToValueAtTime(0.0001, at + 0.006);
+    level.gain.exponentialRampToValueAtTime(0.0001, at + TIC_LENGTH);
     const side = ctx.createStereoPanner();
     side.pan.value = pan;
     osc.connect(level).connect(side).connect(master);
     osc.start(at);
-    osc.stop(at + 0.01);
+    osc.stop(at + TIC_LENGTH + 0.005);
   }
 
   // El golpe grave con el que acaban algunas ráfagas: una onda de 55 Hz, cortísima.
@@ -184,15 +191,17 @@ export function createSound() {
   }
 
   // Una ráfaga de tics: todos a la misma frecuencia, a ritmo regular y en el mismo sitio
-  // entre los dos altavoces.
+  // entre los dos altavoces. Si está sonando un scratch, empieza cuando acabe.
   function tics() {
     const count = Math.round(random(...TIC_COUNT));
     const gap = random(...TIC_GAP);
     const frequency = TIC_FREQUENCIES[Math.floor(Math.random() * TIC_FREQUENCIES.length)];
     const pan = random(-0.7, 0.7);
-    const now = ctx.currentTime + 0.02;
-    for (let k = 0; k < count; k++) tic(now + k * gap, frequency, pan);
-    if (Math.random() < 0.3) thump(now + count * gap);
+    const start = Math.max(ctx.currentTime + 0.02, busyUntil);
+    for (let k = 0; k < count; k++) tic(start + k * gap, frequency, pan);
+    const end = start + count * gap;
+    if (Math.random() < 0.3) thump(end);
+    busyUntil = end + 0.25;
   }
 
   function scheduleTics() {
@@ -244,7 +253,9 @@ export function createSound() {
     if (!on || !cursor.active) return;
     const speed = Math.hypot(cursor.vx, cursor.vy);
     const now = ctx.currentTime;
-    if (speed > STIR_SPEED && now - lastStir > STIR_GAP) {
+    // Si está sonando otro sonido suelto (unos tics), al remover no suena nada: el scratch
+    // llegaría tarde y ya no parecería del gesto.
+    if (speed > STIR_SPEED && now - lastStir > STIR_GAP && now >= busyUntil) {
       // Cuenta como intento aunque no suene: así no vuelve a probar en el fotograma
       // siguiente, y la espera de STIR_GAP vale igual.
       lastStir = now;
