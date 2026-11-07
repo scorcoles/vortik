@@ -22,12 +22,17 @@ const VOLUME = 0.5;
 const FADE = 2;
 
 // Cada cuánto sale un scratch solo: entre y (segundos).
-const SCRATCH_EVERY = [3, 10];
+const SCRATCH_EVERY = [6, 16];
 
-// Lo deprisa que tiene que ir el cursor para que remover suene, y lo menos que pasa entre
-// un scratch del cursor y el siguiente (segundos).
-const STIR_SPEED = 1.6;
-const STIR_GAP = 1;
+// Lo deprisa que tiene que ir el cursor para que remover suene (solo con un gesto rápido de
+// verdad), lo menos que pasa entre un scratch del cursor y el siguiente (segundos) y la
+// probabilidad de que suene cuando toca: no siempre, para que no parezca un botón.
+const STIR_SPEED = 3;
+const STIR_GAP = 4;
+const STIR_CHANCE = 0.5;
+
+// El volumen de un scratch (el grave es la base: el scratch, un detalle por encima).
+const SCRATCH_VOLUME = 0.12;
 
 function random(a, b) {
   return a + Math.random() * (b - a);
@@ -112,8 +117,8 @@ export function createSound() {
     // Su volumen: entra de golpe y se apaga al acabar las idas y vueltas.
     const level = ctx.createGain();
     level.gain.setValueAtTime(0, now);
-    level.gain.linearRampToValueAtTime(0.35 * strength, now + 0.01);
-    level.gain.setValueAtTime(0.35 * strength, t - 0.03);
+    level.gain.linearRampToValueAtTime(SCRATCH_VOLUME * strength, now + 0.01);
+    level.gain.setValueAtTime(SCRATCH_VOLUME * strength, t - 0.03);
     level.gain.linearRampToValueAtTime(0, t);
 
     source.connect(band).connect(level).connect(master);
@@ -130,7 +135,7 @@ export function createSound() {
     high.type = 'highpass';
     high.frequency.value = 2500;
     const level = ctx.createGain();
-    level.gain.setValueAtTime(0.25, now);
+    level.gain.setValueAtTime(0.12, now);
     level.gain.exponentialRampToValueAtTime(0.001, now + 0.02);
     source.connect(high).connect(level).connect(master);
     source.start(now, random(0, 0.9));
@@ -170,15 +175,17 @@ export function createSound() {
     setTimeout(() => !on && ctx.suspend(), (FADE / 2) * 1000 + 100);
   }
 
-  // Cada fotograma, con el cursor (pointer.js): si se remueve deprisa, un scratch (como
-  // mucho uno cada STIR_GAP segundos), más fuerte cuanto más deprisa.
+  // Cada fotograma, con el cursor (pointer.js): si se remueve muy deprisa, a veces, un
+  // scratch (como mucho uno cada STIR_GAP segundos), más fuerte cuanto más deprisa.
   function update(cursor) {
     if (!on || !cursor.active) return;
     const speed = Math.hypot(cursor.vx, cursor.vy);
     const now = ctx.currentTime;
     if (speed > STIR_SPEED && now - lastStir > STIR_GAP) {
+      // Cuenta como intento aunque no suene: así no vuelve a probar en el fotograma
+      // siguiente, y la espera de STIR_GAP vale igual.
       lastStir = now;
-      scratch(Math.min(1.2, speed / (STIR_SPEED * 2)));
+      if (Math.random() < STIR_CHANCE) scratch(Math.min(1, speed / (STIR_SPEED * 2)));
     }
   }
 
