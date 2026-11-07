@@ -455,6 +455,12 @@ export function createVortex() {
   hole.position.z = -DEPTH;
   hole.renderOrder = 10;
 
+  // Aun así, si no se inclinara nada, al inclinar mucho el plano parecería un círculo
+  // pegado encima. Se inclina un poco: esta parte de lo que se inclina el plano (0 = nada,
+  // 1 = lo mismo). Como está justo en el eje de la inclinación, no se mueve de su sitio:
+  // solo se hace un poco elipse.
+  const HOLE_TILT = 0.4;
+
   // En el esquema, el horizonte dibujado: el borde del agujero.
   const horizon = new THREE.LineLoop(
     new THREE.BufferGeometry().setFromPoints(
@@ -501,6 +507,10 @@ export function createVortex() {
   // «cursor»: dónde está el ratón o el dedo y a qué velocidad va (pointer.js, paso 9).
   function update(dt, cursor) {
     time += dt;
+
+    // El agujero, inclinado un poco con el plano (paso 10).
+    hole.rotation.x = tilt.rotation.x * HOLE_TILT;
+    hole.rotation.y = tilt.rotation.y * HOLE_TILT;
     const nextSpeed = spinAt(time);
     // La aceleración del giro: cuánto ha cambiado la velocidad, por segundo.
     const alpha = (nextSpeed - spinSpeed) / dt;
