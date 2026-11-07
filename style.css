@@ -203,9 +203,17 @@ canvas.is-tilting {
   display: none;
 }
 
-.sound:hover,
+/* Al pasar el ratón por encima, del todo. Solo con ratón: en el móvil, al tocar un botón,
+   el navegador lo deja «con el ratón encima» hasta que se toca en otro sitio, y se
+   quedaría en blanco. Con el teclado, al llegar con el tabulador. */
+@media (hover: hover) {
+  .sound:hover,
+  .share:hover {
+    opacity: 1;
+  }
+}
+
 .sound:focus-visible,
-.share:hover,
 .share:focus-visible {
   opacity: 1;
 }

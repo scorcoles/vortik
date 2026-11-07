@@ -24,12 +24,11 @@ const FADE = 2;
 // Cada cuánto sale un scratch solo: entre y (segundos).
 const SCRATCH_EVERY = [6, 16];
 
-// Lo deprisa que tiene que ir el cursor para que remover suene (solo con un gesto rápido de
-// verdad), lo menos que pasa entre un scratch del cursor y el siguiente (segundos) y la
+// Lo deprisa que tiene que ir el cursor para que remover suene (con un gesto rápido), lo menos que pasa entre un scratch del cursor y el siguiente (segundos) y la
 // probabilidad de que suene cuando toca: no siempre, para que no parezca un botón.
-const STIR_SPEED = 3;
-const STIR_GAP = 4;
-const STIR_CHANCE = 0.5;
+const STIR_SPEED = 2;
+const STIR_GAP = 2.5;
+const STIR_CHANCE = 0.8;
 
 // El volumen de un scratch (el grave es la base: el scratch, un detalle por encima).
 const SCRATCH_VOLUME = 0.12;
