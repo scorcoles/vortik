@@ -12,6 +12,7 @@ import * as THREE from 'three';
 import { createRibbons, widthAt, densityAt } from './ribbons.js';
 import { createDrops } from './drops.js';
 import { createGuides } from './guides.js';
+import { createMotion } from './motion.js';
 
 // Una vuelta entera, en radianes.
 const TAU = Math.PI * 2;
@@ -31,8 +32,9 @@ const DEPTH = 0.6;
 // sigue girando. En la foto, cada gota salió de un sitio distinto y lleva un tiempo
 // distinto volando, y todas juntas dibujan una EVOLVENTE del círculo: la curva que deja
 // un hilo al desenrollarse de un carrete del tamaño del agujero.
-// Con «?espiral=log» en la dirección, la espiral logarítmica del principio, para comparar.
-export const SPIRAL = new URLSearchParams(location.search).get('espiral') === 'log' ? 'log' : 'involute';
+// Aun así, a la vista queda mejor la espiral logarítmica, así que es la de serie. La
+// evolvente, con «?espiral=evolvente» en la dirección, para comparar.
+export const SPIRAL = new URLSearchParams(location.search).get('espiral') === 'evolvente' ? 'involute' : 'log';
 
 // Cuánto se enrosca la espiral logarítmica. 0 = fibras rectas hacia el centro; más = más
 // vueltas.
@@ -391,7 +393,10 @@ export function createVortex() {
   // Para la tarjeta gráfica, todas las fibras finas son un solo objeto. Un solo objeto se
   // pinta de una vez, y eso es mucho más rápido que miles de objetos sueltos.
   const geometry = new THREE.BufferGeometry();
-  geometry.setAttribute('position', new THREE.BufferAttribute(centers, 3));
+  const centersAttribute = new THREE.BufferAttribute(centers, 3);
+  // «Dynamic»: le avisamos a la GPU de que esta lista va a cambiar en cada fotograma.
+  centersAttribute.setUsage(THREE.DynamicDrawUsage);
+  geometry.setAttribute('position', centersAttribute);
   const colorAttribute = new THREE.BufferAttribute(colors, 3);
   geometry.setAttribute('color', colorAttribute);
   geometry.setIndex(lineSegments(1));
@@ -422,6 +427,13 @@ export function createVortex() {
   const object = new THREE.Group();
   object.add(lines, ribbons.object, drops.object, guides);
 
+  // Three.js no pinta lo que cree que está fuera de la pantalla, y lo calcula con el
+  // tamaño de cada capa al crearla. Como ahora las fibras se mueven, que no lo calcule.
+  for (const layer of [lines, ribbons.object, drops.object]) layer.frustumCulled = false;
+
+  // Los muelles y la inercia de cada punto (paso 8).
+  const motion = createMotion(fibers, centers);
+
   // =======================================================================================
   // Paso 5 · Todo gira
   // =======================================================================================
@@ -430,8 +442,30 @@ export function createVortex() {
   // traga las fibras hacia el agujero; en positivo, que las escupe.
   const SPIN = -0.12;
 
+  // El giro respira (paso 8): acelera y frena un poco, con dos ondas lentas de distinta
+  // duración, para que el pulso no se repita igual. Al acelerar y frenar, las fibras se
+  // quedan atrás y se pasan: eso es lo que se ve como inercia.
+  const PULSE = 0.5;
+  function spinAt(time) {
+    return SPIN * (1 + PULSE * (0.7 * Math.sin(0.6 * time) + 0.3 * Math.sin(1.7 * time + 1)));
+  }
+
+  let time = 0;
+  let spin = spinAt(0);
+
   function update(dt) {
-    object.rotation.z += SPIN * dt;
+    time += dt;
+    const nextSpin = spinAt(time);
+    // La aceleración del giro: cuánto ha cambiado la velocidad, por segundo.
+    const alpha = (nextSpin - spin) / dt;
+    spin = nextSpin;
+    object.rotation.z += spin * dt;
+
+    // Cada punto, con su muelle; y las tres capas, rehechas sobre los puntos movidos.
+    motion.update(dt, alpha, time);
+    centersAttribute.needsUpdate = true;
+    ribbons.update();
+    drops.update();
   }
 
   // =======================================================================================

@@ -10,6 +10,7 @@
 //   guides.js  → Paso 7 · las guías del modo esquema
 //   toner.js   → Paso 7 · el desgaste de fotocopia del modo portada
 //   notes.js   → Paso 7 · el cajetín del modo esquema
+//   motion.js  → Paso 8 · muelles, inercia y viento: cada punto se mueve por su cuenta
 
 import { createStage } from './stage.js';
 import { createVortex, RADIUS } from './vortex.js';
