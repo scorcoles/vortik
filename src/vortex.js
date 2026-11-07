@@ -9,7 +9,7 @@
 // Así cualquier trozo de fibra, esté donde esté, «sabe» por dónde tiene que ir.
 
 import * as THREE from 'three';
-import { createRibbons } from './ribbons.js';
+import { createRibbons, widthAt } from './ribbons.js';
 import { createDrops } from './drops.js';
 
 // Una vuelta entera, en radianes.
@@ -198,9 +198,9 @@ function createTangle(angle) {
   // Es aquí donde está la pintura gruesa: alguna lámina ancha (como las de abajo a la
   // derecha en la portada), bastantes chorros y el resto, fibras finas.
   let width = 0;
-  if (splash) width = chance(0.5) ? random(0.004, 0.012) : 0;
-  else if (chance(0.015)) width = random(0.025, 0.045);
-  else if (chance(0.12)) width = random(0.004, 0.012);
+  if (splash) width = chance(0.5) ? random(0.003, 0.009) : 0;
+  else if (chance(0.015)) width = random(0.02, 0.035);
+  else if (chance(0.12)) width = random(0.003, 0.009);
 
   // Las salpicaduras casi siempre acaban en gota; las demás, a veces. Si la fibra es una
   // cinta, la gota es un poco más gorda que ella; si es fina, una gotita.
@@ -215,7 +215,8 @@ function createTangle(angle) {
     wobble: splash ? 0.005 : random(0.008, 0.03),
     waves: splash ? 1 : random(1.5, 3.5),
     phase: random(0, TAU),
-    brightness: random(0.5, 1),
+    // La pintura gruesa, en gris claro (como en la portada); las fibras finas, más blancas.
+    brightness: width ? random(0.55, 0.85) : random(0.5, 1),
     curl: 0,
     width,
     profile: 'paint',
@@ -242,6 +243,24 @@ function createFibers() {
     }
   }
   return fibers;
+}
+
+// Los círculos que van en las puntas de las fibras (paso 6):
+//   - las cintas, en sus dos extremos, una tapa redonda de su mismo ancho: un líquido
+//     nunca acaba en punta;
+//   - las que tienen gota, en su punta libre, la gota (o la tapa, si es más gorda).
+function createCircles(fibers) {
+  const circles = [];
+  fibers.forEach((fiber, f) => {
+    const ends = [f * POINTS, f * POINTS + POINTS - 1];
+    [0, 1].forEach((end) => {
+      const cap = fiber.width > 0 ? widthAt(fiber, end) / 2 : 0;
+      const drop = fiber.dropAt === end ? fiber.drop : 0;
+      const radius = Math.max(cap, drop);
+      if (radius > 0) circles.push({ point: ends[end], radius, brightness: fiber.brightness });
+    });
+  });
+  return circles;
 }
 
 // =========================================================================================
@@ -294,7 +313,7 @@ export function createVortex() {
 
   // Capas 2 y 3 · Las cintas y las gotas (paso 6).
   const ribbons = createRibbons(fibers, centers, POINTS);
-  const drops = createDrops(fibers, centers, POINTS);
+  const drops = createDrops(centers, createCircles(fibers));
 
   // Se pintan en este orden: primero las líneas, encima la pintura gruesa y encima las gotas.
   lines.renderOrder = 0;

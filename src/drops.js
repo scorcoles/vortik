@@ -1,10 +1,13 @@
 // =========================================================================================
-// Paso 6 · Grosor (2): las gotitas de las puntas
+// Paso 6 · Grosor (2): gotas y puntas redondas
 // =========================================================================================
 //
-// Cuando la pintura sale disparada, la punta del hilo acaba en una gota redonda. Cada gota
-// es un círculo pequeño. Como hay cientos, usamos un InstancedMesh: un solo círculo que la
-// GPU copia muchas veces, cada copia («instancia») con su sitio, su tamaño y su color.
+// Un líquido nunca acaba en punta: acaba redondo. Así que en los extremos de las cintas
+// ponemos un círculo de su mismo ancho (una «tapa»), y en las puntas que salen disparadas,
+// una gota. Las dos cosas son lo mismo: un círculo pequeño, en un punto de una fibra.
+//
+// Como hay cientos, usamos un InstancedMesh: un solo círculo que la GPU copia muchas veces,
+// cada copia («instancia») con su sitio, su tamaño y su color.
 
 import * as THREE from 'three';
 
@@ -12,33 +15,29 @@ import * as THREE from 'three';
 // sacamos la «matriz» (la forma de decirle a la GPU dónde y cómo de grande va).
 const helper = new THREE.Object3D();
 
-// «centers» es la lista con la línea central de todas las fibras (x, y, z seguidos,
-// «points» puntos por fibra). Cada gota va en una de las dos puntas de su fibra.
-export function createDrops(fibers, centers, points) {
-  // Solo las fibras con gota, y en qué punto de «centers» va.
-  const drops = [];
-  fibers.forEach((fiber, f) => {
-    if (fiber.drop > 0) drops.push({ fiber, point: f * points + fiber.dropAt * (points - 1) });
-  });
+// «centers» es la lista con la línea central de todas las fibras (x, y, z seguidos).
+// «circles» dice, para cada círculo: en qué punto de «centers» va, su radio y su color.
+//   [{ point, radius, brightness }, …]
+export function createDrops(centers, circles) {
+  // Un círculo de radio 1 hecho con 20 triángulos: a ese tamaño no se le notan los picos.
+  const circle = new THREE.CircleGeometry(1, 20);
+  // Opaco, como la pintura de las cintas: si se transparentaran, se vería el círculo
+  // donde se monta sobre su cinta.
+  const material = new THREE.MeshBasicMaterial({ depthWrite: false });
+  const object = new THREE.InstancedMesh(circle, material, circles.length);
 
-  // Un círculo de radio 1 hecho con 12 triángulos: a ese tamaño no se le notan los picos.
-  const circle = new THREE.CircleGeometry(1, 12);
-  const material = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.9, depthWrite: false });
-  const object = new THREE.InstancedMesh(circle, material, drops.length);
-
-  // El color de cada gota, el de su fibra.
   const color = new THREE.Color();
-  drops.forEach(({ fiber }, k) => {
-    object.setColorAt(k, color.setScalar(fiber.brightness));
+  circles.forEach(({ brightness }, k) => {
+    object.setColorAt(k, color.setScalar(brightness));
   });
 
-  // Pone cada gota en la punta de su fibra. Como las cintas, ahora una vez y en el paso 7
-  // en cada fotograma.
+  // Pone cada círculo en su punto. Como las cintas, ahora una vez y en el paso 7 en cada
+  // fotograma.
   function update() {
-    drops.forEach(({ fiber, point }, k) => {
+    circles.forEach(({ point, radius }, k) => {
       const c = point * 3;
       helper.position.set(centers[c], centers[c + 1], centers[c + 2]);
-      helper.scale.setScalar(fiber.drop);
+      helper.scale.setScalar(radius);
       helper.updateMatrix();
       object.setMatrixAt(k, helper.matrix);
     });

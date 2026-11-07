@@ -16,21 +16,34 @@ import * as THREE from 'three';
 
 const TAU = Math.PI * 2;
 
+// Una curva suave de 0 a 1 entre «edge0» y «edge1»: 0 antes, 1 después y una «S» entre
+// medias. Sirve para que algo aparezca poco a poco en vez de saltar.
+function smoothstep(edge0, edge1, x) {
+  const k = Math.min(Math.max((x - edge0) / (edge1 - edge0), 0), 1);
+  return k * k * (3 - 2 * k);
+}
+
 // Ancho de la cinta a la fracción t de su recorrido (0 = principio, 1 = final).
-function widthAt(fiber, t) {
-  // Engorda y adelgaza a lo largo, como un chorro de pintura que no sale igual.
-  const lumps = 1 + 0.4 * Math.sin(t * fiber.lumps * TAU + fiber.phase * 2);
+// Exportada porque las tapas redondas de las puntas (vortex.js) miden lo mismo.
+export function widthAt(fiber, t) {
+  // «towardTip» va de 0 en la base a 1 en la punta libre, la de la gota.
+  const towardTip = fiber.dropAt === 1 ? t : 1 - t;
+
+  // Engorda y adelgaza a lo largo, como un líquido que no sale igual: dos ondas de
+  // distinta frecuencia, para que los tramos anchos y estrechos no se repitan.
+  const s = t * fiber.lumps * TAU + fiber.phase * 2;
+  const lumps = 1 + 0.4 * Math.sin(s) + 0.2 * Math.sin(2.3 * s + 1.7);
 
   if (fiber.profile === 'club') {
-    // Cerilla: fina en la base y cada vez más gorda hacia la punta libre, donde la espera
-    // su gota. «towardTip» va de 0 en la base a 1 en la punta.
-    const towardTip = fiber.dropAt === 1 ? t : 1 - t;
+    // Cerilla: fina en la base y cada vez más gorda hacia la punta libre.
     return fiber.width * (0.2 + 0.8 * towardTip ** 1.5) * lumps;
   }
 
-  // Pintura: se afina hacia las dos puntas (sin llegar a 0, para que la gota quede unida).
-  const taper = Math.max(0.15, Math.sin(Math.PI * t) ** 0.4);
-  return fiber.width * taper * lumps;
+  // Pintura: un líquido nunca acaba en punta. No se afina hacia los extremos; al
+  // contrario, en el último cuarto se condensa y engorda hacia la punta libre, como la
+  // pintura que se acumula antes de caer. Nunca baja del 35 % de su ancho.
+  const condense = 1 + 0.7 * smoothstep(0.75, 1, towardTip);
+  return fiber.width * Math.max(0.35, lumps) * condense;
 }
 
 // «centers» es la lista con la línea central de todas las fibras (x, y, z seguidos,
@@ -74,12 +87,10 @@ export function createRibbons(fibers, centers, points) {
   geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
   geometry.setIndex(new THREE.BufferAttribute(triangles, 1));
 
-  // La pintura gruesa tapa lo que tiene detrás (no se suma como las líneas), aunque deja
-  // pasar un poco: así no parece recortada en cartulina.
+  // La pintura gruesa es opaca: tapa lo que tiene detrás (no se suma como las líneas).
+  // Opaca también para que no se note dónde la cinta se monta sobre la tapa de su punta.
   const material = new THREE.MeshBasicMaterial({
     vertexColors: true,
-    transparent: true,
-    opacity: 0.9,
     side: THREE.DoubleSide,
     depthWrite: false,
   });
