@@ -263,8 +263,14 @@ export function createSound() {
     }
   }
 
+  // Cuando algo sale despedido del remolino (ejecta.js): un scratch suave, si suena.
+  function eject() {
+    if (on) scratch(0.4);
+  }
+
   return {
     toggle: () => (on ? stop() : start(), on),
     update,
+    eject,
   };
 }
