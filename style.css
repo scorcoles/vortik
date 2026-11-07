@@ -313,12 +313,13 @@ canvas.is-tilting {
   background: #2a2926;
 }
 
+/* El pie, en verde lima (como el símbolo de VERTIK en la web). */
 .is-cover .credit {
-  color: #e6e2d6;
+  color: #afc45e;
 }
 
 .is-cover .credit__tag {
-  background: #e6e2d6;
+  background: #afc45e;
   color: #2a2926;
 }
 
