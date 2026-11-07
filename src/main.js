@@ -63,6 +63,15 @@ setupModes((name, style) => {
 // El botón de compartir: una foto como se ve ahora, en el modo que esté puesto.
 setupShare(stage, () => mode);
 
+// El contador de FPS de abajo a la derecha: oculto hasta que se pide por consola.
+const fpsDisplay = document.querySelector('[data-fps-display]');
+window.vortik = {
+  ...window.vortik,
+  showFps(on = true) {
+    if (fpsDisplay) fpsDisplay.hidden = !on;
+  },
+};
+
 // Doble clic o doble toque: un vórtice nuevo. Se tira el viejo y se crea otro (con sus
 // propios mapas de densidad, fibras y quiebros), pintado en el modo que esté puesto.
 function regenerate() {

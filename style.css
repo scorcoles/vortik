@@ -26,6 +26,38 @@ canvas.is-tilting {
   cursor: grabbing;
 }
 
+/* El contador de FPS, abajo a la derecha. Oculto de entrada: se muestra con
+   vortik.showFps(). La misma tipografía que el pie y el cajetín (máquina de escribir). */
+.fps {
+  position: fixed;
+  right: 8px;
+  bottom: 8px;
+  margin: 0;
+  z-index: 2;
+  color: #fff;
+  font: 9px/1.5 ui-monospace, Menlo, Consolas, monospace;
+  letter-spacing: 0.04em;
+  pointer-events: none;
+}
+
+.fps[hidden] {
+  display: none;
+}
+
+@media (min-width: 64rem) and (pointer: fine) {
+  .fps {
+    font-size: 10px;
+  }
+}
+
+.is-cover .fps {
+  color: #e6e2d6;
+}
+
+.is-wire .fps {
+  color: #c9d1d9;
+}
+
 /* Pie con instrucciones y créditos, en letra pequeña de máquina de escribir (como en
    vertikis), en blanco sobre el negro. */
 .credit {

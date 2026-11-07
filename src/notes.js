@@ -47,12 +47,12 @@ export function setupNotesToggle() {
   });
 }
 
-// El contador de fotogramas por segundo del cajetín: cuenta los fotogramas y, cada medio
-// segundo, escribe cuántos han salido por segundo. Se llama en cada fotograma. Mide con el
-// reloj del navegador y no con el dt del bucle, que está limitado (stage.js): por debajo de
-// 20 fps, con dt, marcaría de más.
+// El contador de fotogramas por segundo: cuenta los fotogramas y, cada medio segundo,
+// escribe cuántos han salido por segundo en todos los sitios que lo muestran ([data-fps]:
+// el cajetín del modo wire y el contador suelto de abajo a la derecha, si está activo).
+// Se llama en cada fotograma. Mide con el reloj del navegador y no con el dt del bucle,
+// que está limitado (stage.js): por debajo de 20 fps, con dt, marcaría de más.
 export function createFps() {
-  const el = document.querySelector('[data-fps]');
   let frames = 0;
   let since = performance.now();
   return () => {
@@ -60,7 +60,8 @@ export function createFps() {
     const now = performance.now();
     const elapsed = (now - since) / 1000;
     if (elapsed < 0.5) return;
-    if (el) el.textContent = Math.round(frames / elapsed);
+    const fps = String(Math.round(frames / elapsed));
+    for (const el of document.querySelectorAll('[data-fps]')) el.textContent = fps;
     frames = 0;
     since = now;
   };

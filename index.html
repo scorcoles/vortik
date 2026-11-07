@@ -31,6 +31,10 @@
     <!-- El cajetín del modo wire: qué es y con qué números funciona (src/notes.js). -->
     <div class="notes" data-notes aria-hidden="true"></div>
 
+    <!-- El contador de FPS, abajo a la derecha: oculto hasta que se activa por consola
+         con vortik.showFps(). Lleva data-fps para que createFps (notes.js) lo actualice. -->
+    <div class="fps" data-fps-display hidden aria-live="polite"><span data-fps>—</span> fps</div>
+
     <!-- Arriba a la derecha: el sonido (src/sound.js), apagado de entrada, y compartir una
          foto de cómo está ahora el remolino (src/share.js; si el navegador no sabe
          compartir imágenes, no aparece). -->
