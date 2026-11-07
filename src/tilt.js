@@ -118,11 +118,15 @@ export function createTilt(canvas) {
       target.x *= k;
       target.y *= k;
     }
+    // La goma: con poco, la inclinación es la que pide la mano; cuanto más se pide, más
+    // cuesta, y nunca pasa de MAX_TILT. La tangente hiperbólica (tanh) hace justo eso:
+    // tanh(x) ≈ x para x pequeño, y se acerca a 1 sin llegar nunca. Se aplica a la
+    // inclinación total (los dos ejes juntos), no a cada eje: si no, en diagonal se
+    // sumarían y pasaría de MAX_TILT.
+    const asked = Math.hypot(target.x, target.y);
+    const scale = asked > 0 ? (MAX_TILT * Math.tanh(asked / MAX_TILT)) / asked : 0;
     for (const axis of ['x', 'y']) {
-      // La goma: con poco, la inclinación es la que pide la mano; cuanto más se pide, más
-      // cuesta, y nunca pasa de MAX_TILT. La tangente hiperbólica (tanh) hace justo eso:
-      // tanh(x) ≈ x para x pequeño, y se acerca a 1 sin llegar nunca.
-      const wanted = MAX_TILT * Math.tanh(target[axis] / MAX_TILT);
+      const wanted = target[axis] * scale;
       const accel = STIFFNESS * (wanted - angle[axis]) - damping * speed[axis];
       speed[axis] += accel * dt;
       angle[axis] += speed[axis] * dt;

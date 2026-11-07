@@ -460,7 +460,7 @@ export function createVortex() {
   // 1 = lo mismo). Como está justo en el eje de la inclinación, no se mueve de su sitio:
   // solo se hace un poco elipse. (Con menos no se nota: un círculo inclinado 12° solo se
   // estrecha un 2 %.)
-  const HOLE_TILT = 0.75;
+  const HOLE_TILT = 0.9;
 
   // En el esquema, el horizonte dibujado: el borde del agujero.
   const horizon = new THREE.LineLoop(
