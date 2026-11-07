@@ -90,8 +90,7 @@ canvas.is-tilting {
 }
 
 /* El cajetín del modo esquema, como el del modo wire de vertikis: abajo a la derecha,
-   encima del pie, filas separadas por una línea fina. En pantallas estrechas no cabe y
-   no se ve. */
+   encima del pie, filas separadas por una línea fina. En el móvil, arriba (más abajo). */
 .notes {
   position: fixed;
   right: 16px;
@@ -112,9 +111,27 @@ canvas.is-tilting {
   display: block;
 }
 
+/* En el móvil: abajo choca con el pie, que ocupa varias líneas. En vertical, el remolino
+   se ajusta al ancho y deja libre la franja de arriba: el cajetín va ahí, debajo del botón
+   de compartir, más pequeño y del ancho justo de lo que dice. */
 @media (max-width: 39.99rem) {
-  .is-esquema .notes {
-    display: none;
+  .notes {
+    top: 52px;
+    right: 8px;
+    bottom: auto;
+    width: auto;
+    font-size: 8.5px;
+    line-height: 15px;
+  }
+
+  .notes div {
+    padding: 0 7px;
+  }
+
+  .notes i {
+    width: 7px;
+    height: 7px;
+    margin-right: 6px;
   }
 }
 
