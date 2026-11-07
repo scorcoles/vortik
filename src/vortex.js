@@ -322,9 +322,9 @@ function createTangle(angle) {
 // anillo. Los del borde, casi parejos: tienen que cerrar el círculo.
 export const FAMILIES = [
   { name: 'borde', color: '#ffd166', count: 1400, points: 4, bends: [0, 0, 0], create: createMicro, contrast: 0.6 },
-  { name: 'cerdas', color: '#ef476f', count: 500, points: 24, bends: [3, 0.006, 0.1], create: createHair, contrast: 3 },
-  { name: 'corrientes', color: '#06d6a0', count: 750, points: 64, bends: [5, 0.02, 0.12], create: createStream, contrast: 2 },
-  { name: 'anillo', color: '#4cc9f0', count: 280, points: 64, bends: [7, 0.05, 0.18], create: createTangle, contrast: 1.5 },
+  { name: 'cerdas', color: '#ef476f', count: 500, points: 24, bends: [3, 0.006, 0.1], create: createHair, contrast: 4 },
+  { name: 'corrientes', color: '#06d6a0', count: 750, points: 64, bends: [5, 0.02, 0.12], create: createStream, contrast: 3 },
+  { name: 'anillo', color: '#4cc9f0', count: 280, points: 64, bends: [7, 0.05, 0.18], create: createTangle, contrast: 2 },
 ];
 
 // Una rama de una cinta: una copia de su madre que solo recorre su recorrido desde «at»
