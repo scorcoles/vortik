@@ -18,6 +18,12 @@ canvas {
   height: 100%;
   display: block;
   touch-action: none;
+  /* Clic y arrastrar inclina el plano (paso 10): la mano para agarrar. */
+  cursor: grab;
+}
+
+canvas.is-tilting {
+  cursor: grabbing;
 }
 
 /* Pie con instrucciones y créditos, en letra pequeña de máquina de escribir (como en

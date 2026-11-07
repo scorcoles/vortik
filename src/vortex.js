@@ -422,10 +422,55 @@ export function createVortex() {
   // Las guías del modo esquema (paso 7): el agujero, el borde, la corriente y los mapas.
   const guides = createGuides();
 
-  // Todo junto en un grupo: lo que le hagamos al grupo (girarlo, inclinarlo) les pasa a
-  // todas las capas.
+  // Todo junto en un grupo, «spin»: lo que le hagamos al grupo (girarlo) les pasa a todas
+  // las capas. Y ese grupo, dentro de otro, «tilt», que lo inclina (paso 10).
+  //
+  // ¿Por qué dos? Para inclinar sobre el centro del agujero, que está en el fondo del
+  // embudo (z = -DEPTH), y no sobre el borde: así el agujero no se mueve al inclinar.
+  // «tilt» se pone en el fondo del embudo, y «spin», dentro, se sube otra vez DEPTH: el
+  // remolino se queda donde estaba, pero el eje de la inclinación pasa por el agujero.
+  const spin = new THREE.Group();
+  spin.position.z = DEPTH;
+  spin.add(lines, ribbons.object, drops.object, guides);
+
+  const tilt = new THREE.Group();
+  tilt.position.z = -DEPTH;
+  tilt.add(spin);
+
+  // =======================================================================================
+  // Paso 10 · El agujero: un círculo fijo, como la sombra de un agujero negro
+  // =======================================================================================
+  //
+  // La sombra de un agujero negro se ve redonda desde cualquier lado: lo que se inclina y
+  // se deforma es el disco de materia que gira a su alrededor. Así que el agujero ya no es
+  // solo el hueco que dejan las fibras: es un disco del color del fondo que siempre mira a
+  // la cámara y se pinta encima de todo. Lo que el cursor empuje hacia dentro desaparece al
+  // cruzar su borde, como tragado, y el borde queda siempre perfecto. Está fuera de «tilt»:
+  // no se inclina ni gira.
+  const hole = new THREE.Mesh(
+    new THREE.CircleGeometry(HOLE, 128),
+    // «depthTest: false»: se pinta encima aunque haya fibras delante.
+    new THREE.MeshBasicMaterial({ transparent: true, opacity: 1, depthTest: false, depthWrite: false }),
+  );
+  hole.position.z = -DEPTH;
+  hole.renderOrder = 10;
+
+  // En el esquema, el horizonte dibujado: el borde del agujero.
+  const horizon = new THREE.LineLoop(
+    new THREE.BufferGeometry().setFromPoints(
+      Array.from({ length: 128 }, (_, k) => {
+        const a = (k / 128) * Math.PI * 2;
+        return new THREE.Vector3(HOLE * Math.cos(a), HOLE * Math.sin(a), 0);
+      }),
+    ),
+    new THREE.LineBasicMaterial({ color: '#ffffff', transparent: true, opacity: 0.6, depthTest: false }),
+  );
+  horizon.renderOrder = 11;
+  hole.add(horizon);
+
+  // Lo que se añade a la escena: el remolino (inclinado y girando) y el agujero.
   const object = new THREE.Group();
-  object.add(lines, ribbons.object, drops.object, guides);
+  object.add(tilt, hole);
 
   // Three.js no pinta lo que cree que está fuera de la pantalla, y lo calcula con el
   // tamaño de cada capa al crearla. Como ahora las fibras se mueven, que no lo calcule.
@@ -451,16 +496,16 @@ export function createVortex() {
   }
 
   let time = 0;
-  let spin = spinAt(0);
+  let spinSpeed = spinAt(0);
 
   // «cursor»: dónde está el ratón o el dedo y a qué velocidad va (pointer.js, paso 9).
   function update(dt, cursor) {
     time += dt;
-    const nextSpin = spinAt(time);
+    const nextSpeed = spinAt(time);
     // La aceleración del giro: cuánto ha cambiado la velocidad, por segundo.
-    const alpha = (nextSpin - spin) / dt;
-    spin = nextSpin;
-    object.rotation.z += spin * dt;
+    const alpha = (nextSpeed - spinSpeed) / dt;
+    spinSpeed = nextSpeed;
+    spin.rotation.z += spinSpeed * dt;
 
     // Cada punto, con su muelle; y las tres capas, rehechas sobre los puntos movidos.
     motion.update(dt, alpha, time, cursor);
@@ -509,10 +554,15 @@ export function createVortex() {
     ribbons.object.material.wireframe = style.wireframe;
     drops.object.material.wireframe = style.wireframe;
     guides.visible = style.guides;
+    // El agujero, del color del fondo (y con su borde dibujado en el esquema).
+    hole.material.color.set(style.background);
+    horizon.visible = style.guides;
   }
 
   // Los números del remolino, para el cajetín del modo esquema (notes.js).
   const info = { fibers: fibers.length, points: totalPoints, spin: SPIN };
 
-  return { object, update, setStyle, info };
+  // «object» va a la escena; «tilt», a tilt.js, para inclinarlo; «spin» es el sistema del
+  // remolino, al que pointer.js pasa el cursor.
+  return { object, tilt, spin, update, setStyle, info };
 }

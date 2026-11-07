@@ -91,7 +91,6 @@ export function createMotion(fibers, centers) {
   // segundo), «time», el reloj, para el viento, y «cursor», lo que dice pointer.js.
   function update(dt, alpha, time, cursor) {
     const stirring = cursor.active;
-    const d = cursor.cameraDistance;
     const cursorSpeed = Math.hypot(cursor.vx, cursor.vy);
 
     for (let i = 0; i < count; i++) {
@@ -110,13 +109,14 @@ export function createMotion(fibers, centers) {
       fx += WIND * wind[0];
       fy += WIND * wind[1];
 
-      // El cursor. Por la perspectiva, un punto hundido en el embudo se ve más cerca del
-      // centro de lo que está: multiplicado por d / (d − z), con d la distancia de la
-      // cámara. Comparamos con el cursor donde se VE el punto, no donde está.
+      // El cursor. Lo comparamos con el punto a SU profundidad: el rayo del cursor, a la
+      // altura z del punto, pasa por (x + sx · z, y + sy · z) (pointer.js). Así removemos
+      // justo lo que se ve debajo del cursor, aunque esté hundido en el embudo o el plano
+      // esté inclinado.
       if (stirring) {
-        const seen = d / (d - rest[i3 + 2]);
-        const dx = x * seen - cursor.x;
-        const dy = y * seen - cursor.y;
+        const z = rest[i3 + 2];
+        const dx = x - (cursor.x + cursor.sx * z);
+        const dy = y - (cursor.y + cursor.sy * z);
         const distance2 = dx * dx + dy * dy;
         if (distance2 < stirRadius2) {
           // Cuánto le afecta: 1 justo debajo del cursor y 0 en el borde, con una caída

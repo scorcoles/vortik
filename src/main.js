@@ -12,6 +12,7 @@
 //   notes.js   → Paso 7 · el cajetín del modo esquema
 //   motion.js  → Paso 8 · muelles, inercia y viento: cada punto se mueve por su cuenta
 //   pointer.js → Paso 9 · el cursor, en el sistema del remolino, para remover las fibras
+//   tilt.js    → Paso 10 · clic y arrastrar (o dos dedos) para inclinar el plano
 
 import { createStage } from './stage.js';
 import { createVortex, RADIUS } from './vortex.js';
@@ -19,6 +20,7 @@ import { setupModes } from './modes.js';
 import { applyToner } from './toner.js';
 import { fillNotes } from './notes.js';
 import { createPointer } from './pointer.js';
+import { createTilt } from './tilt.js';
 
 const canvas = document.querySelector('[data-vortik]');
 const stage = createStage(canvas, { radius: RADIUS });
@@ -39,12 +41,15 @@ setupModes((name, style) => {
   if (name === 'portada') applyToner(document.querySelector('.toner'));
 });
 
-// El ratón o el dedo (paso 9).
+// El ratón o el dedo: para remover (paso 9) y para inclinar (paso 10).
 const pointer = createPointer(canvas, stage.camera);
+const tilt = createTilt(canvas);
 
-// Cada fotograma: dónde está el cursor, el remolino avanza dt segundos y el escenario lo
-// pinta.
+// Cada fotograma: la inclinación, dónde está el cursor (mientras se inclina, no remueve),
+// el remolino avanza dt segundos y el escenario lo pinta.
 stage.start((dt) => {
-  const cursor = pointer.update(dt, vortex.object);
+  tilt.update(dt, vortex.tilt);
+  const cursor = pointer.update(dt, vortex.spin);
+  if (tilt.isDragging()) cursor.active = false;
   vortex.update(dt, cursor);
 });
