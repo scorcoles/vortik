@@ -16,14 +16,17 @@ import * as THREE from 'three';
 const helper = new THREE.Object3D();
 
 // «centers» es la lista con la línea central de todas las fibras (x, y, z seguidos).
-// «circles» dice, para cada círculo: de qué fibra es, en qué punto de «centers» va y su
-// radio.   [{ fiber, point, radius }, …]
+// «circles» dice, para cada círculo: de qué fibra es, en qué punto de «centers» va, su
+// radio y su densidad (1 = el color de su fibra; menos, más oscuro).
+//   [{ fiber, point, radius, density }, …]
 export function createDrops(centers, circles) {
   // Un círculo de radio 1 hecho con 20 triángulos: a ese tamaño no se le notan los picos.
   const circle = new THREE.CircleGeometry(1, 20);
   // Opaco, como la pintura de las cintas: si se transparentaran, se vería el círculo
-  // donde se monta sobre su cinta.
-  const material = new THREE.MeshBasicMaterial({ depthWrite: false });
+  // donde se monta sobre su cinta. Y, como las cintas, marcado «transparent» con opacidad
+  // 1, para que se pinte después de las líneas finas y no le pasen por encima
+  // (ribbons.js lo explica).
+  const material = new THREE.MeshBasicMaterial({ transparent: true, opacity: 1, depthWrite: false });
   const object = new THREE.InstancedMesh(circle, material, circles.length);
 
   // Pone cada círculo en su punto. Como las cintas, ahora una vez y en el paso 8 en cada
@@ -41,8 +44,9 @@ export function createDrops(centers, circles) {
 
   // Pinta cada círculo del color de su fibra, el que diga «colorOf(fiber)» (lo elige el
   // modo, paso 7).
+  const shaded = new THREE.Color();
   function recolor(colorOf) {
-    circles.forEach(({ fiber }, k) => object.setColorAt(k, colorOf(fiber)));
+    circles.forEach(({ fiber, density }, k) => object.setColorAt(k, shaded.copy(colorOf(fiber)).multiplyScalar(density)));
     object.instanceColor.needsUpdate = true;
   }
 

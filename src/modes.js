@@ -20,9 +20,10 @@
 // otro, y la dirección lleva el modo (#portada, #esquema) para poder compartirlo.
 
 export const MODES = {
-  // Noche: blanco sobre negro, con las líneas sumándose. El primero que hicimos.
+  // Noche: blanco sobre negro, con las líneas sumándose. El primero que hicimos. El negro,
+  // con un punto cálido (algo de marrón): el negro puro, con el blanco encima, corta.
   noche: {
-    background: '#000000',
+    background: '#100e0b',
     paint: '#ecebe6',
     palette: 'tone',
     lineOpacity: 0.35,

@@ -1,9 +1,10 @@
-/* La página entera es el escenario: negra, sin márgenes y sin scroll. */
+/* La página entera es el escenario: negra (un negro cálido, el del modo noche), sin
+   márgenes y sin scroll. */
 html,
 body {
   margin: 0;
   height: 100%;
-  background: #000;
+  background: #100e0b;
   overflow: hidden;
   overscroll-behavior: none;
 }

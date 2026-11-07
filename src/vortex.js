@@ -9,7 +9,7 @@
 // Así cualquier trozo de fibra, esté donde esté, «sabe» por dónde tiene que ir.
 
 import * as THREE from 'three';
-import { createRibbons, widthAt } from './ribbons.js';
+import { createRibbons, widthAt, densityAt } from './ribbons.js';
 import { createDrops } from './drops.js';
 import { createGuides } from './guides.js';
 
@@ -346,7 +346,9 @@ function createCircles(fibers) {
       const cap = fiber.width > 0 ? widthAt(fiber, end) / 2 : 0;
       const drop = fiber.dropAt === end ? fiber.drop : 0;
       const radius = Math.max(cap, drop);
-      if (radius > 0) circles.push({ fiber, point: ends[end], radius });
+      // La tapa, con la densidad de la cinta en esa punta, para que no se note el empalme.
+      const density = fiber.width > 0 ? densityAt(fiber, end) : 1;
+      if (radius > 0) circles.push({ fiber, point: ends[end], radius, density });
     });
   });
   return circles;
