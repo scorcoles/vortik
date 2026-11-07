@@ -22,7 +22,7 @@ const BEATS = [
 ];
 
 // Cuántos segundos antes del latido se avisa de que viene («onSoon»).
-const SOON = 2.3;
+const SOON = 1.4;
 
 // Lo que tarda cada golpe en llegar a lo más alto (τ, segundos).
 const RISE = 0.07;

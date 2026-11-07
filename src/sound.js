@@ -11,7 +11,7 @@
 //     con la mano. Sale solo cada pocos segundos, y también al remover deprisa con el cursor.
 //     A veces, en lugar de scratch, un chasquido de vinilo;
 //   - el LATIDO (heartbeat.js): con cada golpe, un golpe grave que cae de tono, como un
-//     bombo muy blando. Antes, todo lo demás se apaga en medio segundo y 1,8 segundos de
+//     bombo muy blando. Antes, todo lo demás se apaga en medio segundo y 0,9 segundos de
 //     silencio absoluto; después del latido, vuelve poco a poco;
 //   - la INCLINACIÓN (tilt.js) cambia el grave: inclinar arriba o abajo sube o baja su
 //     tono (hasta 4 semitonos), e inclinar a izquierda o derecha lo hace más brillante o
