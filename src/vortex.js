@@ -165,9 +165,9 @@ function fiberPoint(fiber, t, out, i) {
 // grumos y huecos, distinta cada vez que se carga la página.
 // «contrast» exagera la diferencia: con 1, suave; con 3, zonas llenas y zonas vacías.
 // El suelo de los mapas: ninguna zona baja de esta parte de lo que tienen las más llenas.
-// Así quedan zonas CASI vacías, con alguna fibra suelta, en lugar de calvas. En el móvil,
-// con menos fibras que repartir, un poco más de suelo (si no, quedaban demasiado vacías).
-const GAP_FLOOR = { desktop: 0.04, phone: 0.09 };
+// Así el reparto es irregular pero sin calvas. Las zonas CASI vacías no salen de aquí,
+// sino de los claros (createClearings, más abajo): unas pocas, y bien marcadas.
+const GAP_FLOOR = { desktop: 0.2, phone: 0.2 };
 
 function createDensity(contrast) {
   const floor = isPhone() ? GAP_FLOOR.phone : GAP_FLOOR.desktop;
@@ -355,6 +355,46 @@ function createBranch(parent) {
   };
 }
 
+// Los claros: dos o tres zonas por vórtice que se quedan CASI vacías, con alguna fibra
+// suelta. Cada claro es un trozo del círculo (alrededor de un ángulo, de 20° a 45° hacia
+// cada lado) y afecta solo a algunas familias: a las de dentro (cerdas y corrientes), al
+// anillo, o a las tres. Así, a veces, se abre un claro dentro con el anillo pasando por
+// encima, y otras, un hueco en el anillo. Al borde del agujero, nunca: el círculo tiene
+// que seguir cerrado. Como cada fibra se coloca por el ángulo donde empieza y luego gira
+// en espiral, el claro también sale en espiral.
+const CLEARINGS = [2, 3];
+const CLEARING_LEFT = 0.05; // lo que queda en el centro de un claro: el 5 %
+const CLEARING_GROUPS = [['cerdas', 'corrientes'], ['anillo'], ['cerdas', 'corrientes', 'anillo']];
+
+function createClearings() {
+  const count = Math.round(random(...CLEARINGS));
+  return Array.from({ length: count }, () => ({
+    angle: random(0, TAU),
+    width: THREE.MathUtils.degToRad(random(20, 45)),
+    families: CLEARING_GROUPS[Math.floor(Math.random() * CLEARING_GROUPS.length)],
+  }));
+}
+
+// El mapa de densidad «density» de una familia, con sus claros: en cada uno, la densidad
+// baja hasta CLEARING_LEFT en el centro, con el borde suave (la mitad de dentro, al
+// mínimo; la de fuera, una «S» hasta el mapa normal), para que no parezca un corte.
+function withClearings(density, clearings, name) {
+  const mine = clearings.filter((c) => c.families.includes(name));
+  if (mine.length === 0) return density;
+  return (angle) => {
+    let k = 1;
+    for (const c of mine) {
+      // La distancia en ángulo al centro del claro, dando la vuelta por el lado corto.
+      const d = Math.abs(((angle - c.angle + Math.PI * 3) % TAU) - Math.PI);
+      if (d >= c.width) continue;
+      const edge = Math.min(1, Math.max(0, (d - c.width * 0.5) / (c.width * 0.5)));
+      const open = edge * edge * (3 - 2 * edge);
+      k *= CLEARING_LEFT + (1 - CLEARING_LEFT) * open;
+    }
+    return density(angle) * k;
+  };
+}
+
 // Crea todas las fibras y apunta en cada una de qué familia es, cuántos puntos tiene y
 // dónde empieza («first») en la lista de puntos de todas. Y un número al azar, «rank»,
 // para que los modos que pintan menos líneas (paso 7) sepan cuáles quitar.
@@ -370,10 +410,11 @@ function createFibers() {
   const fibers = [];
   let first = 0;
   const share = isPhone() ? PHONE_SHARE : DESKTOP_SHARE;
+  const clearings = createClearings();
   FAMILIES.forEach((family, index) => {
     // Su mapa de densidad, sorteado de nuevo en cada vórtice: así cada uno tiene sus
-    // propias zonas llenas y vacías.
-    family.density = createDensity(family.contrast);
+    // propias zonas llenas y vacías. Y, encima, los claros que le tocan.
+    family.density = withClearings(createDensity(family.contrast), clearings, family.name);
     // Cuántas tiene en este vórtice (las que dice el cajetín del modo wire, notes.js).
     family.made = Math.round(family.count * share);
     for (let n = 0; n < family.made; n++) {
