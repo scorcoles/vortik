@@ -232,12 +232,12 @@ canvas.is-tilting {
   height: 20px;
 }
 
-/* El altavoz, a la vista, se queda pequeño al lado de compartir: un 50 % más grande, sin
+/* El altavoz, a la vista, se queda pequeño al lado de compartir: un 30 % más grande, sin
    cambiar el sitio que ocupa (el margen negativo se come lo que crece). */
 .sound svg {
-  width: 30px;
-  height: 30px;
-  margin: -5px;
+  width: 26px;
+  height: 26px;
+  margin: -3px;
 }
 
 .is-cover .sound,
@@ -259,9 +259,9 @@ canvas.is-tilting {
   }
 
   .sound svg {
-    width: 36px;
-    height: 36px;
-    margin: -6px;
+    width: 30px;
+    height: 30px;
+    margin: -3px;
   }
 }
 
