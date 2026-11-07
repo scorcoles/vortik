@@ -104,11 +104,12 @@ export function createSound() {
     breath.start();
     lowpass.connect(master);
 
-    // Las tres ondas del grave.
+    // Las tres ondas del grave. La octava (la tercera) es la que hace que el bajo se
+    // «sienta» en los altavoces pequeños de un móvil o un portátil, que apenas dan 49 Hz.
     for (const [frequency, type, gain] of [
-      [DRONE, 'sine', 0.5],
-      [DRONE * BEAT, 'sine', 0.5],
-      [DRONE * 2, 'triangle', 0.08],
+      [DRONE, 'sine', 0.65],
+      [DRONE * BEAT, 'sine', 0.65],
+      [DRONE * 2, 'triangle', 0.11],
     ]) {
       const osc = ctx.createOscillator();
       osc.type = type;
