@@ -18,7 +18,7 @@ const MIN = 0.7;
 const MAX = 1.25;
 
 // Lo deprisa que vuelve a su tamaño al soltar: cuánto se acerca a 1 cada segundo.
-const RETURN = 0.8;
+const RETURN = 1.5;
 
 // El muelle que sigue al tamaño pedido: rigidez y amortiguación (1 = sin pasarse).
 const STIFFNESS = 25;
