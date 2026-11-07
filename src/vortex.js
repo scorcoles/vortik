@@ -164,6 +164,11 @@ function fiberPoint(fiber, t, out, i) {
 // vueltas, cada una empezando en un sitio al azar: sale una curva suave e irregular, con
 // grumos y huecos, distinta cada vez que se carga la página.
 // «contrast» exagera la diferencia: con 1, suave; con 3, zonas llenas y zonas vacías.
+// El suelo de los mapas: ninguna zona baja de esta parte de lo que tienen las más llenas.
+// Los huecos siguen siendo huecos, pero no se quedan vacíos del todo (en el móvil, con
+// menos fibras, se veían demasiado vacíos).
+const GAP_FLOOR = 0.2;
+
 function createDensity(contrast) {
   const waves = [1, 2, 3, 5].map((turns) => ({ turns, phase: random(0, TAU), weight: 1 / turns }));
   const total = waves.reduce((sum, w) => sum + w.weight, 0);
@@ -171,8 +176,10 @@ function createDensity(contrast) {
   return (angle) => {
     let v = 0;
     for (const w of waves) v += w.weight * Math.sin(w.turns * angle + w.phase);
-    // v / total va de -1 a 1: lo pasamos a 0…1 y lo elevamos para dar contraste.
-    return ((v / total + 1) / 2) ** contrast;
+    // v / total va de -1 a 1: lo pasamos a 0…1 y lo elevamos para dar contraste. Y,
+    // encima del suelo: de GAP_FLOOR a 1.
+    const shape = ((v / total + 1) / 2) ** contrast;
+    return GAP_FLOOR + (1 - GAP_FLOOR) * shape;
   };
 }
 
