@@ -19,10 +19,11 @@ import { createStage } from './stage.js';
 import { createVortex, RADIUS } from './vortex.js';
 import { setupModes } from './modes.js';
 import { applyToner } from './toner.js';
-import { fillNotes, setupNotesToggle } from './notes.js';
+import { fillNotes, setupNotesToggle, createFps } from './notes.js';
 import { createPointer } from './pointer.js';
 import { createTilt } from './tilt.js';
 import { setupShare } from './share.js';
+import { isPhone } from './device.js';
 
 const canvas = document.querySelector('[data-vortik]');
 const stage = createStage(canvas, { radius: RADIUS });
@@ -31,6 +32,7 @@ let vortex = createVortex();
 stage.scene.add(vortex.object);
 fillNotes(document.querySelector('[data-notes]'), vortex.info);
 setupNotesToggle();
+const countFps = createFps();
 
 // Cada vez que cambia el modo: el fondo, el remolino y una clase en <html> (is-portada,
 // is-esquema…) para que style.css cambie el pie y ponga, o no, el desgaste del cartón.
@@ -40,7 +42,9 @@ setupModes((name, style) => {
   stage.setBackground(style.background);
   vortex.setStyle(style);
   // La suavidad de lente: un desenfoque muy leve de todo el canvas (lo hace el navegador).
-  canvas.style.filter = style.soften ? `blur(${style.soften}px)` : '';
+  // En el móvil no: redibujar el canvas entero con un filtro en cada fotograma es de lo más
+  // caro que hay, y en una pantalla tan densa apenas se notaba.
+  canvas.style.filter = style.soften && !isPhone() ? `blur(${style.soften}px)` : '';
   // (Sin pisar «is-notes-open»: si el cajetín estaba desplegado, lo sigue estando.)
   const root = document.documentElement;
   const notesOpen = root.classList.contains('is-notes-open');
@@ -86,6 +90,7 @@ const tilt = createTilt(canvas);
 // Cada fotograma: la inclinación, dónde está el cursor (mientras se inclina, no remueve),
 // el remolino avanza dt segundos y el escenario lo pinta.
 stage.start((dt) => {
+  countFps();
   tilt.update(dt, vortex.tilt);
   const cursor = pointer.update(dt, vortex.spin);
   if (tilt.isDragging()) cursor.active = false;

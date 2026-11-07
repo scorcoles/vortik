@@ -8,6 +8,7 @@
 //   - una «camera», el punto de vista desde el que se mira la escena.
 
 import * as THREE from 'three';
+import { isPhone } from './device.js';
 
 // Apertura de la cámara, en grados. Poca apertura = poca deformación, como un teleobjetivo.
 const FOV = 35;
@@ -20,8 +21,10 @@ const FILL = 0.7;
 export function createStage(canvas, { radius }) {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
   // En pantallas retina hay 2 píxeles reales por cada píxel CSS: pintamos al doble para
-  // que las fibras se vean finas y nítidas (como mucho ×2, para no gastar de más).
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  // que las fibras se vean finas y nítidas (como mucho ×2, para no gastar de más). En el
+  // móvil, como mucho ×1,5: casi la mitad de píxeles que pintar, y en una pantalla tan
+  // pequeña y tan densa no se nota.
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, isPhone() ? 1.5 : 2));
   renderer.setClearColor(0x000000, 1);
 
   const scene = new THREE.Scene();

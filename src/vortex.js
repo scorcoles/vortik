@@ -13,6 +13,7 @@ import { createRibbons, widthAt, densityAt } from './ribbons.js';
 import { createDrops } from './drops.js';
 import { createGuides } from './guides.js';
 import { createMotion } from './motion.js';
+import { isPhone } from './device.js';
 
 // Una vuelta entera, en radianes.
 const TAU = Math.PI * 2;
@@ -315,10 +316,10 @@ export const FAMILIES = [
 // Crea todas las fibras y apunta en cada una de qué familia es, cuántos puntos tiene y
 // dónde empieza («first») en la lista de puntos de todas. Y un número al azar, «rank»,
 // para que los modos que pintan menos líneas (paso 7) sepan cuáles quitar.
-// En el móvil (pantalla táctil o estrecha), un 20 % menos de fibras: se ve menos denso en
-// una pantalla pequeña, y son unos 17.000 puntos menos que mover en cada fotograma.
-const PHONE_SHARE = 0.8;
-const isPhone = () => window.matchMedia('(max-width: 47.99rem), (pointer: coarse)').matches;
+// En el móvil (pantalla táctil o estrecha), poco más de la mitad de las fibras: se ve
+// menos denso en una pantalla pequeña, y son unos 37.000 puntos menos que mover en cada
+// fotograma (con todas, en un móvil iba a trompicones).
+const PHONE_SHARE = 0.55;
 
 function createFibers() {
   const fibers = [];

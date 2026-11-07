@@ -118,7 +118,7 @@ canvas.is-tilting {
 }
 
 /* En el móvil, el cajetín no se ve de entrada: lo despliega «Info», en el pie, justo encima
-   del texto y a todo el ancho. El pie ocupa más o menos líneas según la pantalla: su alto
+   del texto. El pie ocupa más o menos líneas según la pantalla: su alto
    lo mide notes.js y lo deja en --credit-height. */
 @media (max-width: 39.99rem) {
   .is-esquema .notes {
@@ -129,18 +129,39 @@ canvas.is-tilting {
     display: block;
   }
 
+  /* A todo el ancho, con el mismo margen que el pie. */
   .notes {
     left: 8px;
     right: 8px;
     bottom: calc(var(--credit-height, 90px) + 14px);
     width: auto;
     font-size: 9px;
-    line-height: 16px;
+    line-height: 17px;
   }
 
   .is-esquema .credit__info {
     display: inline-block;
   }
+}
+
+/* Las filas: con aire a los lados y una línea fina entre una y otra. */
+.notes div {
+  padding: 0 10px;
+  white-space: nowrap;
+}
+
+.notes div + div {
+  border-top: 1px solid rgba(201, 209, 217, 0.4);
+}
+
+/* La primera fila, el título, más marcada. */
+.notes div:first-child {
+  color: #c9d1d9;
+}
+
+/* Lo que no se pasa a mayúsculas (la ω del giro). */
+.notes__keep {
+  text-transform: none;
 }
 
 /* El cuadrito del color de cada familia. */

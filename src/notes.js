@@ -14,6 +14,8 @@ export function fillNotes(el, info) {
     'VORTIK · ESQUEMA',
     SPIRAL === 'log' ? 'ESPIRAL LOG. + EMBUDO' : 'EVOLVENTE + EMBUDO',
     'MUELLES + INERCIA + CURSOR',
+    // Los fotogramas por segundo, de verdad: los va poniendo createFps (abajo).
+    '<span data-fps>—</span> FPS',
     `${info.fibers} FIBRAS · ${(info.points / 1000).toFixed(1)}K PTS`,
     // ω (omega): la velocidad de giro, en radianes por segundo. En minúscula aunque el
     // cajetín vaya en mayúsculas: en mayúscula (Ω) serían ohmios.
@@ -43,4 +45,23 @@ export function setupNotesToggle() {
     toggle.setAttribute('aria-expanded', String(open));
     toggle.textContent = open ? 'Cerrar info' : 'Info';
   });
+}
+
+// El contador de fotogramas por segundo del cajetín: cuenta los fotogramas y, cada medio
+// segundo, escribe cuántos han salido por segundo. Se llama en cada fotograma. Mide con el
+// reloj del navegador y no con el dt del bucle, que está limitado (stage.js): por debajo de
+// 20 fps, con dt, marcaría de más.
+export function createFps() {
+  const el = document.querySelector('[data-fps]');
+  let frames = 0;
+  let since = performance.now();
+  return () => {
+    frames++;
+    const now = performance.now();
+    const elapsed = (now - since) / 1000;
+    if (elapsed < 0.5) return;
+    if (el) el.textContent = Math.round(frames / elapsed);
+    frames = 0;
+    since = now;
+  };
 }

@@ -67,7 +67,7 @@ export function setupShare(stage, current) {
     o.fillStyle = style.background;
     o.fillRect(0, 0, out.width, out.height);
     // La suavidad de lente, como en pantalla.
-    if (style.soften) o.filter = `blur(${style.soften * dpr}px)`;
+    if (style.soften && canvas.style.filter) o.filter = `blur(${style.soften * dpr}px)`;
     o.drawImage(canvas, 0, 0);
     o.filter = 'none';
 
