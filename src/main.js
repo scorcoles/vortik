@@ -4,6 +4,8 @@
 // Este archivo solo junta las piezas. Cada una vive en su módulo:
 //   stage.js   → Paso 1 · el escenario (Three.js, la cámara, el tamaño de la ventana)
 //   vortex.js  → Pasos 2 a 5 · la forma del remolino, las fibras, lo orgánico y el giro
+//   ribbons.js → Paso 6 · las fibras gruesas, como cintas
+//   drops.js   → Paso 6 · las gotitas de las puntas
 
 import { createStage } from './stage.js';
 import { createVortex, RADIUS } from './vortex.js';

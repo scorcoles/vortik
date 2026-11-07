@@ -9,6 +9,8 @@
 // Así cualquier trozo de fibra, esté donde esté, «sabe» por dónde tiene que ir.
 
 import * as THREE from 'three';
+import { createRibbons } from './ribbons.js';
+import { createDrops } from './drops.js';
 
 // Una vuelta entera, en radianes.
 const TAU = Math.PI * 2;
@@ -50,6 +52,11 @@ function random(a, b) {
   return a + Math.random() * (b - a);
 }
 
+// Verdadero con probabilidad p: chance(0.3) sale verdadero 3 de cada 10 veces.
+function chance(p) {
+  return Math.random() < p;
+}
+
 // Una fibra es un trozo de la corriente. Para dibujarla basta con saber:
 //   angle       en qué ángulo arranca;
 //   from, to    a qué radio empieza y a qué radio acaba;
@@ -57,7 +64,11 @@ function random(a, b) {
 //   wobble      cuánto se ondula (paso 4);
 //   waves       cuántas ondas hace a lo largo (paso 4);
 //   phase       en qué punto de la onda empieza, para que no ondulen todas a la vez;
-//   brightness  lo blanca que es.
+//   brightness  lo blanca que es;
+//   width       su grosor: 0 = una línea de 1 píxel; si no, una cinta así de ancha (paso 6);
+//   lumps       cuántas veces engorda y adelgaza a lo largo, si es una cinta (paso 6);
+//   drop        el radio de la gotita de una punta, o 0 si no tiene (paso 6);
+//   dropAt      en qué punta está la gotita: 0 = al principio, 1 = al final (paso 6).
 //
 // Esta función escribe en «out», a partir de la posición «i» (x, y, z seguidos), el punto
 // de la fibra que está a la fracción t de su recorrido (0 = principio, 1 = final).
@@ -122,6 +133,11 @@ function createHair(angle) {
     waves: 1,
     phase: random(0, TAU),
     brightness: random(0.25, 0.7),
+    // Siempre finos; alguno acaba en una gotita diminuta, en la punta de fuera.
+    width: 0,
+    lumps: 0,
+    drop: chance(0.12) ? random(0.002, 0.004) : 0,
+    dropAt: 1,
   };
 }
 
@@ -139,6 +155,12 @@ function createStream(angle) {
     waves: random(1, 3),
     phase: random(0, TAU),
     brightness: random(0.3, 1),
+    // Casi todas finas; unas pocas, chorros estrechos. La gotita, en la punta de fuera
+    // (la de dentro se pierde en el agujero).
+    width: chance(0.05) ? random(0.004, 0.009) : 0,
+    lumps: random(1, 3),
+    drop: chance(0.15) ? random(0.003, 0.006) : 0,
+    dropAt: 0,
   };
 }
 
@@ -147,7 +169,19 @@ function createStream(angle) {
 // las salpicaduras de la pintura.
 function createTangle(angle) {
   const from = random(0.72, 1.02);
-  const splash = Math.random() < 0.1;
+  const splash = chance(0.1);
+
+  // Es aquí donde está la pintura gruesa: alguna lámina ancha (como las de abajo a la
+  // derecha en la portada), bastantes chorros y el resto, fibras finas.
+  let width = 0;
+  if (splash) width = chance(0.5) ? random(0.004, 0.012) : 0;
+  else if (chance(0.015)) width = random(0.025, 0.045);
+  else if (chance(0.12)) width = random(0.004, 0.012);
+
+  // Las salpicaduras casi siempre acaban en gota; las demás, a veces. Si la fibra es una
+  // cinta, la gota es un poco más gorda que ella; si es fina, una gotita.
+  const drop = chance(splash ? 0.8 : 0.3) ? (width ? width * random(0.6, 1) : random(0.003, 0.006)) : 0;
+
   return {
     angle,
     from,
@@ -158,6 +192,11 @@ function createTangle(angle) {
     waves: splash ? 1 : random(1.5, 3.5),
     phase: random(0, TAU),
     brightness: random(0.5, 1),
+    width,
+    lumps: random(1, 4),
+    drop,
+    // Las salpicaduras, en la punta que sale disparada; las demás, en cualquiera.
+    dropAt: splash || chance(0.5) ? 1 : 0,
   };
 }
 
@@ -180,40 +219,39 @@ function createFibers() {
 }
 
 // =========================================================================================
-// El remolino: todas las fibras en un solo objeto de Three.js (paso 3) que gira (paso 5)
+// El remolino: las fibras en tres capas de Three.js (pasos 3 y 6) que giran (paso 5)
 // =========================================================================================
 
 export function createVortex() {
   const fibers = createFibers();
 
-  // Para la tarjeta gráfica, todas las fibras son un solo objeto: una lista enorme de
-  // puntos (x, y, z seguidos) y otra de colores (r, g, b seguidos). Un solo objeto se
-  // pinta de una vez, y eso es mucho más rápido que miles de objetos sueltos.
-  const positions = new Float32Array(fibers.length * POINTS * 3);
+  // La línea central de todas las fibras, en una sola lista enorme (x, y, z seguidos).
+  // Las tres capas (líneas, cintas y gotas) se construyen a partir de ella: cuando el
+  // cursor la mueva (paso 7), todas la seguirán.
+  const centers = new Float32Array(fibers.length * POINTS * 3);
   const colors = new Float32Array(fibers.length * POINTS * 3);
 
-  // Y una lista de parejas de puntos que se unen con una línea: (0,1), (1,2), (2,3)…
-  // dentro de cada fibra, sin unir el último punto de una con el primero de la siguiente.
-  const segments = new Uint32Array(fibers.length * (POINTS - 1) * 2);
+  // Capa 1 · Las fibras finas, como líneas. Una lista de parejas de puntos que se unen
+  // con una línea: (0,1), (1,2), (2,3)… dentro de cada fibra, sin unir el último punto de
+  // una con el primero de la siguiente. Las fibras gruesas no se unen: esas son cintas.
+  const segments = [];
 
-  let s = 0;
   fibers.forEach((fiber, f) => {
     const first = f * POINTS;
     for (let p = 0; p < POINTS; p++) {
       const i = (first + p) * 3;
-      fiberPoint(fiber, p / (POINTS - 1), positions, i);
+      fiberPoint(fiber, p / (POINTS - 1), centers, i);
       colors[i] = colors[i + 1] = colors[i + 2] = fiber.brightness;
-      if (p < POINTS - 1) {
-        segments[s++] = first + p;
-        segments[s++] = first + p + 1;
-      }
+      if (fiber.width === 0 && p < POINTS - 1) segments.push(first + p, first + p + 1);
     }
   });
 
+  // Para la tarjeta gráfica, todas las fibras finas son un solo objeto. Un solo objeto se
+  // pinta de una vez, y eso es mucho más rápido que miles de objetos sueltos.
   const geometry = new THREE.BufferGeometry();
-  geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  geometry.setAttribute('position', new THREE.BufferAttribute(centers, 3));
   geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-  geometry.setIndex(new THREE.BufferAttribute(segments, 1));
+  geometry.setIndex(segments);
 
   // Líneas semitransparentes que se SUMAN al cruzarse («additive»): donde se juntan
   // muchas fibras, como en el borde del agujero, la luz se acumula y brilla más. Es lo
@@ -226,7 +264,21 @@ export function createVortex() {
     depthWrite: false,
   });
 
-  const object = new THREE.LineSegments(geometry, material);
+  const lines = new THREE.LineSegments(geometry, material);
+
+  // Capas 2 y 3 · Las cintas y las gotas (paso 6).
+  const ribbons = createRibbons(fibers, centers, POINTS);
+  const drops = createDrops(fibers, centers, POINTS);
+
+  // Se pintan en este orden: primero las líneas, encima la pintura gruesa y encima las gotas.
+  lines.renderOrder = 0;
+  ribbons.object.renderOrder = 1;
+  drops.object.renderOrder = 2;
+
+  // Las tres capas, juntas en un grupo: lo que le hagamos al grupo (girarlo, inclinarlo)
+  // les pasa a las tres.
+  const object = new THREE.Group();
+  object.add(lines, ribbons.object, drops.object);
 
   // =======================================================================================
   // Paso 5 · Todo gira
