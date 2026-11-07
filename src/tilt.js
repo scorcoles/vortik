@@ -5,14 +5,16 @@
 // Con el ratón: clic y arrastrar. En el móvil: dos dedos (uno solo remueve las fibras).
 // El plano se inclina como un plato que agarras: arrastrar hacia abajo acerca el borde de
 // arriba; hacia la derecha, acerca el de la izquierda. Al soltar, vuelve despacio a plano.
+// Cuanto más se inclina, más cuesta, como si tirases de una goma.
 //
 // No movemos el plano directamente al ángulo pedido: el ángulo lo sigue con un muelle,
 // así tiene algo de peso (arranca suave y se pasa un poco al pararse).
 
 import * as THREE from 'three';
 
-// Lo más que se inclina, en grados.
-const MAX_TILT = THREE.MathUtils.degToRad(55);
+// Lo más que se inclina, en grados. Más allá de unos 30° deja de parecer real: el disco
+// se lee como una pegatina y el agujero redondo, como un círculo pegado encima.
+const MAX_TILT = THREE.MathUtils.degToRad(30);
 
 // Cuánto se inclina por cada pantalla arrastrada (en radianes por alto de pantalla).
 const SENSITIVITY = 2.4;
@@ -87,7 +89,9 @@ export function createTilt(canvas) {
     p.y = e.clientY;
     if (!dragging) return;
     const c = center();
-    const clamp = (v) => Math.max(-MAX_TILT, Math.min(MAX_TILT, v));
+    // Lo que pide la mano no tiene tope (bueno: tres veces el máximo, para que al volver
+    // no tarde una eternidad); el tope lo pone la goma, en update().
+    const clamp = (v) => Math.max(-3 * MAX_TILT, Math.min(3 * MAX_TILT, v));
     // Arrastrar en horizontal gira alrededor del eje vertical (y), y en vertical,
     // alrededor del horizontal (x).
     target.y = clamp(base.y + ((c.x - start.x) / window.innerHeight) * SENSITIVITY);
@@ -115,7 +119,11 @@ export function createTilt(canvas) {
       target.y *= k;
     }
     for (const axis of ['x', 'y']) {
-      const accel = STIFFNESS * (target[axis] - angle[axis]) - damping * speed[axis];
+      // La goma: con poco, la inclinación es la que pide la mano; cuanto más se pide, más
+      // cuesta, y nunca pasa de MAX_TILT. La tangente hiperbólica (tanh) hace justo eso:
+      // tanh(x) ≈ x para x pequeño, y se acerca a 1 sin llegar nunca.
+      const wanted = MAX_TILT * Math.tanh(target[axis] / MAX_TILT);
+      const accel = STIFFNESS * (wanted - angle[axis]) - damping * speed[axis];
       speed[axis] += accel * dt;
       angle[axis] += speed[axis] * dt;
     }

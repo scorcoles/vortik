@@ -32,7 +32,7 @@ fillNotes(document.querySelector('[data-notes]'), vortex.info);
 // Cada vez que cambia el modo: el fondo, el remolino y una clase en <html> (is-portada,
 // is-esquema…) para que style.css cambie el pie y ponga, o no, el desgaste del cartón.
 setupModes((name, style) => {
-  stage.renderer.setClearColor(style.background);
+  stage.setBackground(style.background);
   vortex.setStyle(style);
   // La suavidad de lente: un desenfoque muy leve de todo el canvas (lo hace el navegador).
   canvas.style.filter = style.soften ? `blur(${style.soften}px)` : '';

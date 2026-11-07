@@ -26,6 +26,15 @@ export function createStage(canvas, { radius }) {
 
   const scene = new THREE.Scene();
 
+  // Niebla de profundidad (paso 10): lo que está más lejos de la cámara se funde un poco
+  // con el fondo. En plano apenas se nota (el fondo del embudo, un pelo más apagado); al
+  // inclinar, el borde de atrás se oscurece y el de delante queda claro, y eso es lo que
+  // hace que el ojo lo lea en 3D. Empieza a la distancia del borde del remolino (en
+  // resize) y su color es el del fondo (setBackground).
+  const fog = new THREE.Fog(0x000000, 1, 2);
+  scene.fog = fog;
+  const FOG_REACH = 4.5;
+
   // La cámara mira de frente hacia el fondo del embudo (hacia z negativa).
   const camera = new THREE.PerspectiveCamera(FOV, 1, 0.1, 100);
 
@@ -43,6 +52,9 @@ export function createStage(canvas, { radius }) {
     const shortSide = Math.min(1, camera.aspect);
     camera.position.z = radius / (FILL * halfView * shortSide);
     camera.updateProjectionMatrix();
+
+    fog.near = camera.position.z - radius * 0.1;
+    fog.far = fog.near + FOG_REACH;
   }
 
   resize();
@@ -61,5 +73,11 @@ export function createStage(canvas, { radius }) {
     });
   }
 
-  return { scene, camera, renderer, start };
+  // El color del fondo: el del canvas y el de la niebla, que tiene que ser el mismo.
+  function setBackground(color) {
+    renderer.setClearColor(color);
+    fog.color.set(color);
+  }
+
+  return { scene, camera, renderer, start, setBackground };
 }
