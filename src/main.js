@@ -11,12 +11,14 @@
 //   toner.js   → Paso 7 · el desgaste de fotocopia del modo portada
 //   notes.js   → Paso 7 · el cajetín del modo esquema
 //   motion.js  → Paso 8 · muelles, inercia y viento: cada punto se mueve por su cuenta
+//   pointer.js → Paso 9 · el cursor, en el sistema del remolino, para remover las fibras
 
 import { createStage } from './stage.js';
 import { createVortex, RADIUS } from './vortex.js';
 import { setupModes } from './modes.js';
 import { applyToner } from './toner.js';
 import { fillNotes } from './notes.js';
+import { createPointer } from './pointer.js';
 
 const canvas = document.querySelector('[data-vortik]');
 const stage = createStage(canvas, { radius: RADIUS });
@@ -37,7 +39,12 @@ setupModes((name, style) => {
   if (name === 'portada') applyToner(document.querySelector('.toner'));
 });
 
-// Cada fotograma: el remolino avanza dt segundos y el escenario lo pinta.
+// El ratón o el dedo (paso 9).
+const pointer = createPointer(canvas, stage.camera);
+
+// Cada fotograma: dónde está el cursor, el remolino avanza dt segundos y el escenario lo
+// pinta.
 stage.start((dt) => {
-  vortex.update(dt);
+  const cursor = pointer.update(dt, vortex.object);
+  vortex.update(dt, cursor);
 });

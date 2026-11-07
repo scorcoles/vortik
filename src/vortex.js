@@ -453,7 +453,8 @@ export function createVortex() {
   let time = 0;
   let spin = spinAt(0);
 
-  function update(dt) {
+  // «cursor»: dónde está el ratón o el dedo y a qué velocidad va (pointer.js, paso 9).
+  function update(dt, cursor) {
     time += dt;
     const nextSpin = spinAt(time);
     // La aceleración del giro: cuánto ha cambiado la velocidad, por segundo.
@@ -462,7 +463,7 @@ export function createVortex() {
     object.rotation.z += spin * dt;
 
     // Cada punto, con su muelle; y las tres capas, rehechas sobre los puntos movidos.
-    motion.update(dt, alpha, time);
+    motion.update(dt, alpha, time, cursor);
     centersAttribute.needsUpdate = true;
     ribbons.update();
     drops.update();

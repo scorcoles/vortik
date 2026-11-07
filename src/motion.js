@@ -7,11 +7,13 @@
 // sitio en la espiral (su posición «de reposo»). Si nada lo empuja, se queda quieto en su
 // sitio; si algo lo empuja, se aparta, el muelle tira de él y vuelve oscilando un poco.
 //
-// ¿Qué lo empuja? Dos cosas, de momento (en el paso 9, también el cursor):
+// ¿Qué lo empuja? Tres cosas:
 //   - la INERCIA: el giro acelera y frena, y las fibras, como los pasajeros de un tiovivo
 //     cuando arranca, se quedan atrás al acelerar y se pasan al frenar (la «fuerza de
 //     Euler»). Es mayor cuanto más lejos del centro;
-//   - el VIENTO: unas ondas suaves que viajan por el remolino y lo mecen todo el rato.
+//   - el VIENTO: unas ondas suaves que viajan por el remolino y lo mecen todo el rato;
+//   - el CURSOR (paso 9): arrastra los puntos que tiene cerca con su velocidad, como un
+//     dedo que remueve la pintura.
 //
 // Todo se hace en el sistema del remolino (el que gira): ahí el sitio de reposo de cada
 // punto no cambia nunca, y solo calculamos cuánto se aparta de él.
@@ -30,6 +32,15 @@ const INERTIA = 3;
 
 // La fuerza del viento.
 const WIND = 0.05;
+
+// El cursor (paso 9):
+//   STIR_RADIUS  hasta dónde llega, en unidades del remolino (el radio exterior es 1);
+//   STIR         con cuánta fuerza lleva los puntos a su velocidad;
+//   SWIRL        un pequeño remolino alrededor del cursor, que hace que la estela se rice
+//                en vez de moverse en bloque.
+const STIR_RADIUS = 0.16;
+const STIR = 9;
+const SWIRL = 6;
 
 // El viento en el punto (x, y) en el instante t: unas pocas ondas que viajan en distintas
 // direcciones y a distintas velocidades. Suave en el espacio (los puntos vecinos reciben
@@ -69,9 +80,15 @@ export function createMotion(fibers, centers) {
 
   const wind = [0, 0];
 
+  const stirRadius2 = STIR_RADIUS * STIR_RADIUS;
+
   // Un paso de dt segundos. «alpha» es la aceleración del giro (radianes por segundo, cada
-  // segundo) y «time», el reloj, para el viento.
-  function update(dt, alpha, time) {
+  // segundo), «time», el reloj, para el viento, y «cursor», lo que dice pointer.js.
+  function update(dt, alpha, time, cursor) {
+    const stirring = cursor.active;
+    const d = cursor.cameraDistance;
+    const cursorSpeed = Math.hypot(cursor.vx, cursor.vy);
+
     for (let i = 0; i < count; i++) {
       const i2 = i * 2;
       const i3 = i * 3;
@@ -87,6 +104,29 @@ export function createMotion(fibers, centers) {
       windAt(x, y, time, wind);
       fx += WIND * wind[0];
       fy += WIND * wind[1];
+
+      // El cursor. Por la perspectiva, un punto hundido en el embudo se ve más cerca del
+      // centro de lo que está: multiplicado por d / (d − z), con d la distancia de la
+      // cámara. Comparamos con el cursor donde se VE el punto, no donde está.
+      if (stirring) {
+        const seen = d / (d - rest[i3 + 2]);
+        const dx = x * seen - cursor.x;
+        const dy = y * seen - cursor.y;
+        const distance2 = dx * dx + dy * dy;
+        if (distance2 < stirRadius2) {
+          // Cuánto le afecta: 1 justo debajo del cursor y 0 en el borde, con una caída
+          // suave (al cuadrado, para que el borde no se note).
+          const near = (1 - distance2 / stirRadius2) ** 2;
+          // Arrastre: lleva la velocidad del punto hacia la del cursor.
+          fx += STIR * near * (cursor.vx - velocity[i2]);
+          fy += STIR * near * (cursor.vy - velocity[i2 + 1]);
+          // Remolino: un empujón perpendicular a la línea punto–cursor (girarla 90°),
+          // mayor cuanto más rápido va el cursor.
+          const distance = Math.sqrt(distance2) || 1;
+          fx += SWIRL * near * cursorSpeed * (-dy / distance);
+          fy += SWIRL * near * cursorSpeed * (dx / distance);
+        }
+      }
 
       // El muelle tira hacia su sitio (más cuanto más lejos) y la amortiguación frena.
       const k = stiffness[i];

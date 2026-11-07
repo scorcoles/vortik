@@ -13,7 +13,7 @@ export function fillNotes(el, info) {
   const rows = [
     'VORTIK · ESQUEMA',
     SPIRAL === 'log' ? 'ESPIRAL LOG. + EMBUDO' : 'EVOLVENTE + EMBUDO',
-    'MUELLES · INERCIA · VIENTO',
+    'MUELLES + INERCIA + CURSOR',
     `${info.fibers} FIBRAS · ${(info.points / 1000).toFixed(1)}K PTS`,
     // ω (omega): la velocidad de giro, en radianes por segundo. En minúscula aunque el
     // cajetín vaya en mayúsculas: en mayúscula (Ω) serían ohmios.
