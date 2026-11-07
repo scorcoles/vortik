@@ -184,13 +184,23 @@ function createDensity(contrast) {
   };
 }
 
-// Elige un ángulo al azar siguiendo el mapa: probamos ángulos y nos quedamos con uno con
-// la probabilidad que diga el mapa. Donde el mapa vale 1 se acepta casi siempre; donde
-// vale 0,05, una vez de cada veinte. Así las zonas llenas reciben muchas más fibras.
-function pickAngle(density) {
+// Dónde SE VE una fibra: el ángulo del punto medio de su recorrido. No es el ángulo donde
+// empieza: una corriente gira en espiral unos 120° hasta el agujero, y una fibra del
+// anillo recorre de media unos 50°. Si los mapas miraran dónde empiezan, las zonas
+// pobladas y vacías saldrían corridas respecto a donde se ven.
+function seenAngle(fiber) {
+  const r = (fiber.from + fiber.to) / 2;
+  return fiber.angle + spiralAngle(r) + fiber.turn * 0.5;
+}
+
+// Elige una fibra siguiendo el mapa de su familia: la creamos en un ángulo al azar y nos
+// quedamos con ella con la probabilidad que diga el mapa donde se ve. Donde el mapa vale 1
+// se acepta casi siempre; donde vale 0,05, una vez de cada veinte. Así las zonas llenas
+// reciben muchas más fibras.
+function pickFiber(family) {
   for (;;) {
-    const angle = random(0, TAU);
-    if (Math.random() < density(angle)) return angle;
+    const fiber = family.create(random(0, TAU));
+    if (Math.random() < family.density(seenAngle(fiber))) return fiber;
   }
 }
 
@@ -355,21 +365,25 @@ function createBranch(parent) {
   };
 }
 
-// La composición de cada vórtice: una zona CASI vacía, otra MUY poblada (más o menos
-// enfrente, para que un lado pese y el otro respire) y el resto, difuso (los mapas de
-// cada familia, con poco contraste). Cada zona es un trozo del círculo, alrededor de un
-// ángulo, y afecta a cerdas, corrientes y anillo; al borde del agujero, nunca: el círculo
-// tiene que seguir cerrado. Como cada fibra se coloca por el ángulo donde empieza y luego
-// gira en espiral, las zonas también salen en espiral.
-const EMPTY_LEFT = 0.05; // lo que queda en el centro de la zona vacía: el 5 %
-const FULL_BOOST = 3; // la zona poblada, tres veces más densa que el resto
-const ZONE_FAMILIES = ['cerdas', 'corrientes', 'anillo'];
+// La composición de cada vórtice, como en la portada: DENTRO y el ANILLO se compensan.
+//   - dentro (cerdas y corrientes): muy poblado en un lado y casi vacío en el contrario;
+//   - el anillo, al revés: muy poblado (con la pintura gruesa) justo sobre el vacío de
+//     dentro, y ralo, con hebras sueltas, donde dentro pesa.
+// Donde dentro está vacío, fuera pesa; donde dentro pesa, fuera se aligera. El resto, difuso
+// (los mapas de cada familia, con poco contraste). Al borde del agujero no le afecta: el
+// círculo tiene que seguir cerrado. Las zonas miran dónde SE VE cada fibra (seenAngle).
+const EMPTY_LEFT = 0.05; // lo que queda dentro en la zona vacía: el 5 %
+const THIN_LEFT = 0.35; // lo que queda del anillo en su lado ralo: el 35 %
+const FULL_BOOST = 3; // las zonas pobladas, tres veces más densas que el resto
+const INSIDE_FAMILIES = ['cerdas', 'corrientes'];
+const RING_FAMILIES = ['anillo'];
 
 function createComposition() {
-  const empty = random(0, TAU);
+  const heavy = random(0, TAU);
   return {
-    empty: { angle: empty, width: THREE.MathUtils.degToRad(random(25, 45)) },
-    full: { angle: empty + Math.PI + random(-0.7, 0.7), width: THREE.MathUtils.degToRad(random(30, 55)) },
+    // Dónde pesa dentro, y dónde se vacía (enfrente, más o menos).
+    heavy: { angle: heavy, width: THREE.MathUtils.degToRad(random(50, 75)) },
+    light: { angle: heavy + Math.PI + random(-0.4, 0.4), width: THREE.MathUtils.degToRad(random(35, 55)) },
   };
 }
 
@@ -383,16 +397,27 @@ function inside(angle, zone) {
   return 1 - edge * edge * (3 - 2 * edge);
 }
 
-// El mapa de densidad «density» de una familia, con la composición encima: en la zona
-// vacía baja hasta EMPTY_LEFT; en la poblada sube hasta FULL_BOOST veces. Todo dividido
-// entre FULL_BOOST, para que el mapa siga yendo de 0 a 1 (pickAngle lo necesita así).
-function withComposition(density, composition, name) {
-  if (!ZONE_FAMILIES.includes(name)) return density;
+// El mapa de densidad «density» de una familia, con la composición encima: «more» es la
+// zona donde esa familia se puebla y «less», donde se vacía (hasta «left»). Todo dividido
+// entre FULL_BOOST, para que el mapa siga yendo de 0 a 1 (pickFiber lo necesita así).
+function shaped(density, more, less, left) {
   return (angle) => {
-    const empty = 1 - (1 - EMPTY_LEFT) * inside(angle, composition.empty);
-    const full = 1 + (FULL_BOOST - 1) * inside(angle, composition.full);
-    return (density(angle) * empty * full) / FULL_BOOST;
+    const full = 1 + (FULL_BOOST - 1) * inside(angle, more);
+    const empty = 1 - (1 - left) * inside(angle, less);
+    return (density(angle) * full * empty) / FULL_BOOST;
   };
+}
+
+function withComposition(density, composition, name) {
+  const { heavy, light } = composition;
+  if (INSIDE_FAMILIES.includes(name)) return shaped(density, heavy, light, EMPTY_LEFT);
+  // El anillo, al revés: se puebla sobre el vacío de dentro y se aligera donde dentro pesa
+  // (las zonas, un poco más anchas: el anillo da más vuelta).
+  if (RING_FAMILIES.includes(name)) {
+    const wide = (zone) => ({ ...zone, width: zone.width * 1.3 });
+    return shaped(density, wide(light), wide(heavy), THIN_LEFT);
+  }
+  return density;
 }
 
 // Crea todas las fibras y apunta en cada una de qué familia es, cuántos puntos tiene y
@@ -418,7 +443,7 @@ function createFibers() {
     // Cuántas tiene en este vórtice (las que dice el cajetín del modo wire, notes.js).
     family.made = Math.round(family.count * share);
     for (let n = 0; n < family.made; n++) {
-      const fiber = family.create(pickAngle(family.density));
+      const fiber = pickFiber(family);
       fiber.family = index;
       fiber.points = family.points;
       fiber.first = first;
