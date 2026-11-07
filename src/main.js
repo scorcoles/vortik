@@ -119,4 +119,6 @@ stage.start((dt) => {
   // El zoom del latido: todo el remolino, un poco más cerca un instante.
   vortex.object.scale.setScalar(heartbeat.update(dt));
   sound.update(cursor);
+  // La inclinación cambia el tono y el brillo del grave.
+  sound.setTilt(vortex.tilt.rotation.x, vortex.tilt.rotation.y);
 });

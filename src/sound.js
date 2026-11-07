@@ -12,6 +12,9 @@
 //     A veces, en lugar de scratch, un chasquido de vinilo;
 //   - el LATIDO (heartbeat.js): con cada golpe, un golpe grave que cae de tono, como un
 //     bombo muy blando;
+//   - la INCLINACIÓN (tilt.js) cambia el grave: inclinar arriba o abajo sube o baja su
+//     tono (hasta 4 semitonos), e inclinar a izquierda o derecha lo hace más brillante o
+//     más apagado (el filtro, hasta una octava);
 //   - los TICS: de vez en cuando, una ráfaga corta de pulsos electrónicos, agudos, secos y a
 //     ritmo regular, como un error digital que se repite; cada ráfaga en un sitio distinto
 //     entre el altavoz izquierdo y el derecho, y a veces acabada en un golpe grave.
@@ -21,6 +24,14 @@
 // El grave: su frecuencia y cuánto se desafina la segunda onda (el latido).
 const DRONE = 49;
 const BEAT = 1.004;
+
+// El filtro del grave: por dónde corta (Hz). Y lo que cambia con la inclinación: el tono,
+// hasta TILT_PITCH céntimos de semitono (400 = 4 semitonos) arriba o abajo; el filtro,
+// hasta TILT_FILTER octavas. Las dos cosas, al llegar a la inclinación máxima (TILT_MAX).
+const FILTER = 160;
+const TILT_MAX = Math.PI / 6;
+const TILT_PITCH = 400;
+const TILT_FILTER = 1;
 
 // Volumen general, y lo que tarda en entrar y en irse (segundos).
 const VOLUME = 0.5;
@@ -57,6 +68,9 @@ function random(a, b) {
 export function createSound() {
   let ctx = null;
   let master = null;
+  // Lo que cambia con la inclinación: las ondas del grave y su filtro.
+  let drone = [];
+  let lowpass = null;
   let noise = null;
   let on = false;
   let timer = 0;
@@ -78,9 +92,9 @@ export function createSound() {
 
     // El filtro que solo deja los graves, y la «respiración»: una onda lentísima (una vuelta
     // cada 14 segundos) que lo abre y lo cierra.
-    const lowpass = ctx.createBiquadFilter();
+    lowpass = ctx.createBiquadFilter();
     lowpass.type = 'lowpass';
-    lowpass.frequency.value = 160;
+    lowpass.frequency.value = FILTER;
     lowpass.Q.value = 0.8;
     const breath = ctx.createOscillator();
     breath.frequency.value = 1 / 14;
@@ -103,6 +117,7 @@ export function createSound() {
       level.gain.value = gain;
       osc.connect(level).connect(lowpass);
       osc.start();
+      drone.push(osc);
     }
 
     // Un segundo de ruido blanco (números al azar), para los scratches y los chasquidos.
@@ -284,9 +299,23 @@ export function createSound() {
     busyUntil = Math.max(busyUntil, now + 0.6);
   }
 
+  // Cada fotograma, con la inclinación del plano (en radianes, alrededor del eje x y del y):
+  // el tono y el brillo del grave. Con una transición de una décima de segundo
+  // (setTargetAtTime), para que no dé saltos de un fotograma a otro.
+  function setTilt(x, y) {
+    if (!on) return;
+    const clamp = (v) => Math.max(-1, Math.min(1, v / TILT_MAX));
+    const now = ctx.currentTime;
+    // Arriba o abajo (eje x): el tono, con «detune», en céntimos de semitono.
+    for (const osc of drone) osc.detune.setTargetAtTime(clamp(x) * TILT_PITCH, now, 0.1);
+    // A izquierda o derecha (eje y): el filtro, más abierto o más cerrado, en octavas.
+    lowpass.frequency.setTargetAtTime(FILTER * 2 ** (clamp(y) * TILT_FILTER), now, 0.1);
+  }
+
   return {
     toggle: () => (on ? stop() : start(), on),
     update,
     heartbeat,
+    setTilt,
   };
 }
