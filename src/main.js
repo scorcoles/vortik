@@ -15,7 +15,6 @@
 //   tilt.js    → Paso 10 · clic y arrastrar (o dos dedos) para inclinar el plano
 //   share.js   → compartir una foto del momento
 //   sound.js   → el sonido: un grave continuo y algún scratch
-//   ejecta.js  → lo que sale despedido del remolino de vez en cuando
 
 import { createStage } from './stage.js';
 import { createVortex, RADIUS } from './vortex.js';
@@ -68,7 +67,6 @@ function regenerate() {
   vortex = createVortex();
   stage.scene.add(vortex.object);
   vortex.setStyle(mode.style);
-  vortex.ejecta.onEject = sound.eject;
 }
 
 // El doble toque lo detectamos a mano (dos toques en menos de 300 ms, a menos de 30 px):
@@ -89,7 +87,6 @@ canvas.addEventListener('pointerdown', (e) => {
 
 // El sonido, con el altavoz de arriba a la derecha: apagado hasta que se pulsa.
 const sound = createSound();
-vortex.ejecta.onEject = sound.eject;
 const soundButton = document.querySelector('[data-sound]');
 soundButton?.addEventListener('click', () => {
   const playing = sound.toggle();

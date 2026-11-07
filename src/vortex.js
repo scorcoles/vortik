@@ -14,7 +14,6 @@ import { createDrops } from './drops.js';
 import { createGuides } from './guides.js';
 import { createMotion } from './motion.js';
 import { isPhone } from './device.js';
-import { createEjecta } from './ejecta.js';
 
 // Una vuelta entera, en radianes.
 const TAU = Math.PI * 2;
@@ -570,12 +569,6 @@ export function createVortex() {
   tilt.position.z = -DEPTH;
   tilt.add(spin);
 
-  // Lo que sale despedido de vez en cuando (ejecta.js): en el plano del remolino, así que
-  // a la altura de «spin», pero fuera de él: se inclina con el plano y no gira con él.
-  const ejecta = createEjecta();
-  ejecta.object.position.z = DEPTH;
-  tilt.add(ejecta.object);
-
   // =======================================================================================
   // Paso 10 · El agujero: un círculo fijo, como la sombra de un agujero negro
   // =======================================================================================
@@ -657,9 +650,6 @@ export function createVortex() {
     spinSpeed = nextSpeed;
     spin.rotation.z += spinSpeed * dt;
 
-    // Lo que sale despedido, que necesita saber cuánto ha girado y hacia dónde.
-    ejecta.update(dt, spin.rotation.z, spinSpeed);
-
     // Cada punto, con su muelle; y las tres capas, rehechas sobre los puntos movidos.
     motion.update(dt, alpha, time, cursor);
     centersAttribute.needsUpdate = true;
@@ -707,7 +697,6 @@ export function createVortex() {
     ribbons.object.material.wireframe = style.wireframe;
     drops.object.material.wireframe = style.wireframe;
     guides.visible = style.guides;
-    ejecta.setStyle(style, FAMILIES.find((f) => f.name === 'anillo').color);
     // El agujero, del color del fondo (y con su borde dibujado en el modo wire).
     hole.material.color.set(style.background);
     horizon.visible = style.guides;
@@ -727,5 +716,5 @@ export function createVortex() {
     });
   }
 
-  return { object, tilt, spin, ejecta, update, setStyle, info, dispose };
+  return { object, tilt, spin, update, setStyle, info, dispose };
 }
