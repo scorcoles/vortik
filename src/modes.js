@@ -24,7 +24,7 @@ export const MODES = {
   // con un punto cálido (algo de marrón): el negro puro, con el blanco encima, corta.
   noche: {
     background: '#100e0b',
-    paint: '#ecebe6',
+    paint: '#f5f4f0',
     palette: 'tone',
     lineOpacity: 0.35,
     lineBlending: 'add',
@@ -39,7 +39,7 @@ export const MODES = {
   // del cartón los pone style.css, encima del canvas.
   portada: {
     background: '#2a2926',
-    paint: '#dcd8cc',
+    paint: '#e9e6dc',
     palette: 'tone',
     lineOpacity: 0.45,
     lineBlending: 'normal',
