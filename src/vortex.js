@@ -167,7 +167,7 @@ function fiberPoint(fiber, t, out, i) {
 // El suelo de los mapas: ninguna zona baja de esta parte de lo que tienen las más llenas.
 // Así quedan zonas CASI vacías, con alguna fibra suelta, en lugar de calvas. En el móvil,
 // con menos fibras que repartir, un poco más de suelo (si no, quedaban demasiado vacías).
-const GAP_FLOOR = { desktop: 0.08, phone: 0.14 };
+const GAP_FLOOR = { desktop: 0.04, phone: 0.09 };
 
 function createDensity(contrast) {
   const floor = isPhone() ? GAP_FLOOR.phone : GAP_FLOOR.desktop;
