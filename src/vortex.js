@@ -117,22 +117,35 @@ function bendAt(bends, t) {
 // Esta función escribe en «out», a partir de la posición «i» (x, y, z seguidos), el punto
 // de la fibra que está a la fracción t de su recorrido (0 = principio, 1 = final).
 function fiberPoint(fiber, t, out, i) {
+  // Las ramas (paso 6) recorren solo un trozo de la fórmula de su cinta madre, de
+  // span[0] a span[1]: «u» es por dónde van de la madre. Las demás fibras, de 0 a 1.
+  const [start, end] = fiber.span ?? [0, 1];
+  const u = start + (end - start) * t;
+
   // La ondulación fina: dos ondas de distinta frecuencia sumadas. Una sola se ve mecánica,
   // como un muelle; con dos, la fibra parece que tiembla sola.
-  const s = t * fiber.waves * TAU + fiber.phase;
+  const s = u * fiber.waves * TAU + fiber.phase;
   const wave = Math.sin(s) + 0.5 * Math.sin(2.7 * s + 1.3);
 
   // Los quiebros (paso 4): cuánto se aparta la fibra de la espiral, de lado y hacia
   // dentro o fuera, en este punto de su recorrido.
-  const bendR = bendAt(fiber.bendsR, t);
-  const bendA = bendAt(fiber.bendsA, t);
+  let bendR = bendAt(fiber.bendsR, u);
+  let bendA = bendAt(fiber.bendsA, u);
+
+  // Una rama, además, se va apartando de su madre: nada en la bifurcación y cada vez más,
+  // con una «S» suave, hasta su punta. Así primero van juntas y luego se abren en Y.
+  if (fiber.fork) {
+    const apart = t * t * (3 - 2 * t);
+    bendR += fiber.fork.r * apart;
+    bendA += fiber.fork.a * apart;
+  }
 
   // El radio va de «from» a «to», más la ondulación y el quiebro. Nunca dentro del agujero.
-  const r = Math.max(HOLE, fiber.from + (fiber.to - fiber.from) * t + fiber.wobble * wave + bendR);
+  const r = Math.max(HOLE, fiber.from + (fiber.to - fiber.from) * u + fiber.wobble * wave + bendR);
   // El ganchito: un giro de más que apenas se nota en la base y crece hacia la punta libre
   // (al cubo: casi nada hasta el último tramo).
-  const towardTip = fiber.dropAt === 1 ? t : 1 - t;
-  const a = fiber.angle + spiralAngle(r) + fiber.turn * t + fiber.curl * towardTip ** 3 + bendA;
+  const towardTip = fiber.dropAt === 1 ? u : 1 - u;
+  const a = fiber.angle + spiralAngle(r) + fiber.turn * u + fiber.curl * towardTip ** 3 + bendA;
 
   out[i] = r * Math.cos(a);
   out[i + 1] = r * Math.sin(a);
@@ -293,6 +306,7 @@ function createTangle(angle) {
     drop,
     // Las salpicaduras, en la punta que sale disparada; las demás, en cualquiera.
     dropAt: splash || chance(0.5) ? 1 : 0,
+    splash,
     // Las salpicaduras salen casi rectas: sus quiebros, mucho más pequeños; las cintas, la
     // mitad, porque con un quiebro brusco se doblan en «Z» (paso 4).
     bendScale: splash ? 0.15 : width ? 0.5 : 1,
@@ -312,6 +326,26 @@ export const FAMILIES = [
   { name: 'corrientes', color: '#06d6a0', count: 750, points: 64, bends: [5, 0.02, 0.12], create: createStream, contrast: 2 },
   { name: 'anillo', color: '#4cc9f0', count: 280, points: 64, bends: [7, 0.05, 0.18], create: createTangle, contrast: 1.5 },
 ];
+
+// Una rama de una cinta: una copia de su madre que solo recorre su recorrido desde «at»
+// hasta el final (span), y que desde ahí se va apartando hacia un lado (fork). Más fina
+// que la madre, con su propia gota en la punta. Comparte con la madre la ondulación y los
+// quiebros: por eso, en la bifurcación, está justo encima de ella.
+function createBranch(parent) {
+  const at = random(0.3, 0.65);
+  const width = parent.width * random(0.5, 0.75);
+  return {
+    ...parent,
+    span: [at, 1],
+    points: Math.max(12, Math.round(parent.points * (1 - at))),
+    fork: { a: random(0.08, 0.25) * (chance(0.5) ? 1 : -1), r: random(-0.04, 0.04) },
+    width,
+    lumps: random(1, 3),
+    drop: chance(0.7) ? width * random(0.6, 0.9) : 0,
+    dropAt: 1,
+    rank: Math.random(),
+  };
+}
 
 // Crea todas las fibras y apunta en cada una de qué familia es, cuántos puntos tiene y
 // dónde empieza («first») en la lista de puntos de todas. Y un número al azar, «rank»,
@@ -346,6 +380,15 @@ function createFibers() {
       fiber.bendsA = createBends(bends, sizeA * scale);
       first += family.points;
       fibers.push(fiber);
+
+      // Una de cada tres cintas del anillo se divide en dos (paso 6): detrás de ella va su
+      // rama, que empieza a mitad de camino.
+      if (fiber.width > 0 && family.create === createTangle && !fiber.splash && chance(0.3)) {
+        const branch = createBranch(fiber);
+        branch.first = first;
+        first += branch.points;
+        fibers.push(branch);
+      }
     }
   });
   return fibers;
